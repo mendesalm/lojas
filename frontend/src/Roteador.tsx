@@ -10,24 +10,61 @@ import { PaginaComissoes } from '@/modulos/administracao/PaginaComissoes';
 import { PaginaDadosLoja } from '@/modulos/administracao/PaginaDadosLoja';
 import { PaginaMeuCadastro } from '@/modulos/obreiro/PaginaMeuCadastro';
 import { PaginaLogin } from '@/modulos/autenticacao/PaginaLogin';
+import { useAuth } from '@/compartilhado/contextos/AuthContext';
+
+/**
+ * Guarda de rota do Lojas — idêntico ao do CoReVM.
+ * Se o usuário não possui token ou identidade válida do e-Sigma,
+ * redireciona imediatamente para a tela de /login.
+ */
+function RotaProtegida({ children }: { children: React.ReactNode }) {
+  const { token, usuario, carregando } = useAuth();
+
+  if (carregando) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-[#080808] text-yellow-500 font-sans">
+        Carregando Sistema de Lojas...
+      </div>
+    );
+  }
+
+  if (!token || !usuario) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+}
 
 export const Roteador: React.FC = () => {
   return (
     <Routes>
+      {/* Rota Pública de Autenticação */}
       <Route path="/login" element={<PaginaLogin />} />
 
+      {/* Rota Raiz redireciona para /inicio (protegido) */}
+      <Route path="/" element={<Navigate to="/inicio" replace />} />
+
       {/* Rotas Protegidas sob Layout Oficial */}
-      <Route path="/" element={<LayoutLojas />}>
-        <Route index element={<PaginaInicio />} />
-        <Route path="obreiros" element={<PaginaQuadroObreiros />} />
-        <Route path="sessoes" element={<PaginaSessoes />} />
-        <Route path="visitantes" element={<PaginaVisitantes />} />
-        <Route path="comissoes" element={<PaginaComissoes />} />
-        <Route path="dados-loja" element={<PaginaDadosLoja />} />
-        <Route path="meu-cadastro" element={<PaginaMeuCadastro />} />
+      <Route
+        element={
+          <RotaProtegida>
+            <LayoutLojas />
+          </RotaProtegida>
+        }
+      >
+        <Route path="/inicio" element={<PaginaInicio />} />
+        <Route path="/obreiros" element={<PaginaQuadroObreiros />} />
+        <Route path="/sessoes" element={<PaginaSessoes />} />
+        <Route path="/visitantes" element={<PaginaVisitantes />} />
+        <Route path="/comissoes" element={<PaginaComissoes />} />
+        <Route path="/dados-loja" element={<PaginaDadosLoja />} />
+        <Route path="/meu-cadastro" element={<PaginaMeuCadastro />} />
       </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 };
+
+export default Roteador;

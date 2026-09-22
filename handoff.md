@@ -35,9 +35,10 @@ O módulo e aplicativo **Lojas** (`C:\Users\engan\Desktop\Lojas`) foi implantado
   - `src/modulos/administracao/PaginaComissoes.tsx`: Gestão de comissões permanentes e temporárias com definição de presidentes e vigência.
   - `src/modulos/administracao/PaginaDadosLoja.tsx`: Visualização institucional e edição dos dados do templo, dias e horários de reunião.
   - `src/modulos/obreiro/PaginaMeuCadastro.tsx`: Autoatendimento do obreiro com dados cadastrais e histórico de frequência.
-  - `src/modulos/autenticacao/PaginaLogin.tsx`: Login desacoplado e integrado com o e-Sigma.
+  - `src/modulos/autenticacao/PaginaLogin.tsx`: Login desacoplado, com metodologia, arquitetura e layout rigorosamente idênticos aos do CoReVM (`HeroBackground` com partículas canvas, `LogoAnimadaLojas` com neon pulsante, card glassmorphism, inputs com floating labels, login com Google OAuth, e integração total com `POST /api/v1/auth/login` e `/auth/google` do e-Sigma).
+  - `src/Roteador.tsx`: Guarda de rotas `RotaProtegida` idêntica à do CoReVM, garantindo que o acesso a qualquer área interna exija autenticação genuína do e-Sigma, redirecionando automaticamente para `/login`.
 - **Validação de Build**:
-  - `npm run build` gerou artefatos estáticos em `dist/` com **zero erros** de compilação ou tipos.
+  - `npm run build` gerou artefatos estáticos em `dist/` com **zero erros** de compilação ou tipos (incorporando Tailwind CSS v4, PostCSS e Google OAuth).
 
 ### 2.3 Scripts Utilitários
 - `iniciar_backend.bat`: Inicialização automatizada do FastAPI na porta 8001.

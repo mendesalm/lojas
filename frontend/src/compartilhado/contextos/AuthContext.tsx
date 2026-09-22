@@ -18,6 +18,7 @@ interface AuthContextType {
   carregando: boolean;
   lojaAtivaId: number;
   definirLojaAtivaId: (id: number) => void;
+  setLojaAtivaId: (id: number) => void;
   login: (token: string, usuarioData: Usuario) => void;
   logout: () => void;
   modoTema: 'dark' | 'light';
@@ -159,6 +160,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         carregando,
         lojaAtivaId,
         definirLojaAtivaId: setLojaAtivaId,
+        setLojaAtivaId,
         login,
         logout,
         modoTema,

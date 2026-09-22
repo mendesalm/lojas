@@ -1,118 +1,299 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  TextField,
-  Button,
-  Alert,
-  CircularProgress
-} from '@mui/material';
 import axios from 'axios';
-import { useAuth } from '@/compartilhado/contextos/AuthContext';
+import { UserCircle2, Lock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth, clienteHttp } from '../../compartilhado/contextos/AuthContext';
+import { HeroBackground } from '../../compartilhado/componentes/HeroBackground';
+import { LogoAnimadaLojas } from '../../compartilhado/componentes/LogoAnimadaLojas';
+import { GoogleLogin } from '@react-oauth/google';
+
+// Integração real contra o e-Sigma (IdP central do ecossistema)
+// Metodologia idêntica à do CoReVM: o Lojas não valida senhas localmente,
+// delega a autenticação para o e-Sigma e valida o token via GET /auth/validate.
+const ESIGMA_API_URL = import.meta.env.VITE_ESIGMA_API_URL || 'http://localhost:8000/api/v1';
+const API_URL = import.meta.env.VITE_LOJAS_API_URL || 'http://localhost:8001/api/v1';
+
+/**
+ * Decodifica (sem verificar assinatura — isso já foi feito pelo e-Sigma)
+ * o payload de um JWT só para preencher os dados de exibição do usuário no
+ * AuthContext local. A fonte de verdade da identidade continua sendo o
+ * e-Sigma: qualquer chamada de API sensível revalida o token no backend via
+ * GET /auth/validate (core/auth_esigma.py do Lojas).
+ */
+function decodificarPayloadJwt(token: string): any {
+  try {
+    const payloadBase64 = token.split('.')[1];
+    const payloadJson = decodeURIComponent(
+      atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/'))
+        .split('')
+        .map((c) => '%' + c.charCodeAt(0).toString(16).padStart(2, '0'))
+        .join('')
+    );
+    return JSON.parse(payloadJson);
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Consulta o backend do Lojas para resolver o vínculo da Loja do usuário.
+ */
+async function buscarMinhaLoja(): Promise<{ loja_id?: number; loja_nome?: string } | null> {
+  try {
+    const resposta = await clienteHttp.get(`${API_URL}/obreiros/meu-perfil`);
+    if (resposta.data && resposta.data.loja_id) {
+      return {
+        loja_id: resposta.data.loja_id,
+        loja_nome: resposta.data.loja_nome || 'Oficina Maçônica'
+      };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 export const PaginaLogin: React.FC = () => {
-  const navigate = useNavigate();
-  const { login } = useAuth();
-
-  const [identificador, setIdentificador] = useState('');
+  const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
-  const [erro, setErro] = useState('');
 
-  const ESIGMA_AUTH_URL = import.meta.env.VITE_ESIGMA_API_URL || 'http://localhost:8000/api/v1';
+  const navigate = useNavigate();
+  const { login, setLojaAtivaId } = useAuth();
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    setErro(null);
+    setCarregando(true);
+    try {
+      const credential = credentialResponse?.credential;
+      if (!credential) throw new Error('O Google não retornou uma credencial válida.');
+
+      const resposta = await axios.post(`${ESIGMA_API_URL}/auth/google`, {
+        credential,
+        modulo_origem: 'lojas'
+      });
+      const { access_token, deve_trocar_senha } = resposta.data;
+      const payload = decodificarPayloadJwt(access_token);
+
+      login(access_token, {
+        id: payload.user_id || payload.sub,
+        nome: payload.nome || payload.sub,
+        email: payload.sub,
+        roles: payload.role ? [payload.role] : [],
+        loja_id: payload.loja_id
+      });
+
+      if (deve_trocar_senha) {
+        navigate('/trocar-senha-obrigatoria', { replace: true });
+        return;
+      }
+
+      const vinculo = await buscarMinhaLoja();
+      if (vinculo?.loja_id) {
+        setLojaAtivaId(vinculo.loja_id);
+      }
+      navigate('/inicio', { replace: true });
+    } catch (err: any) {
+      setErro(err.response?.data?.detail || err.message || 'Falha no login com Google.');
+    } finally {
+      setCarregando(false);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      setCarregando(true);
-      setErro('');
+    setErro(null);
+    setCarregando(true);
 
-      // Autenticação contra o e-Sigma (IdP Central)
-      const res = await axios.post(`${ESIGMA_AUTH_URL}/auth/login`, {
-        identificador: identificador.trim(),
-        senha: senha,
+    try {
+      // Login real: POST /auth/login no e-Sigma (IdP central).
+      const resposta = await axios.post(`${ESIGMA_API_URL}/auth/login`, {
+        username: email,
+        password: senha,
+        modulo_origem: 'lojas'
+      });
+      const { access_token, deve_trocar_senha } = resposta.data;
+      const payload = decodificarPayloadJwt(access_token);
+
+      login(access_token, {
+        id: payload.user_id || payload.sub,
+        nome: payload.nome || payload.sub,
+        email: payload.sub,
+        roles: payload.role ? [payload.role] : [],
+        loja_id: payload.loja_id
       });
 
-      const token = res.data.access_token || res.data.token;
-      if (token) {
-        login(token, {
-          id: res.data.usuario?.id || 'user',
-          nome: res.data.usuario?.nome || identificador,
-          email: res.data.usuario?.email || identificador,
-          roles: res.data.usuario?.roles || ['obreiro'],
-          loja_id: 2181,
-        });
-        navigate('/');
-      } else {
-        setErro('Token não retornado pelo servidor de autenticação.');
+      if (deve_trocar_senha) {
+        navigate('/trocar-senha-obrigatoria', { replace: true });
+        return;
       }
+
+      const vinculo = await buscarMinhaLoja();
+      if (vinculo?.loja_id) {
+        setLojaAtivaId(vinculo.loja_id);
+      }
+      navigate('/inicio', { replace: true });
     } catch (err: any) {
-      setErro(err.response?.data?.detail || 'Falha ao autenticar. Verifique suas credenciais.');
+      setErro(err.response?.data?.detail || err.message || 'Falha na autenticação. Verifique seu e-mail, CIM ou CPF e a senha.');
     } finally {
       setCarregando(false);
     }
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        bgcolor: 'background.default',
-        p: 2,
-      }}
-    >
-      <Card sx={{ maxWidth: 420, width: '100%', p: 2 }}>
-        <CardContent>
-          <Box sx={{ textAlign: 'center', mb: 3 }}>
-            <Typography variant="h4" sx={{ fontFamily: '"Cinzel", serif', color: 'primary.main', fontWeight: 700 }}>
-              🏛️ LOJAS
-            </Typography>
-            <Typography variant="subtitle2" sx={{ color: 'text.secondary', mt: 0.5 }}>
-              Acesso ao Módulo de Gestão da Loja
-            </Typography>
-          </Box>
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden z-0">
+      {/* Background Animado Idêntico ao CoReVM */}
+      <HeroBackground />
 
-          {erro && <Alert severity="error" sx={{ mb: 2 }}>{erro}</Alert>}
+      <div className="w-full max-w-md relative z-10">
+        {/* Cartão de Login - Glassmorphism */}
+        <div className="bg-[#1a1a1a]/60 backdrop-blur-xl rounded-3xl p-8 sm:p-10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-yellow-500/20">
 
-          <form onSubmit={handleLogin}>
-            <TextField
-              label="E-mail, CIM ou CPF"
-              fullWidth
-              required
-              value={identificador}
-              onChange={(e) => setIdentificador(e.target.value)}
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              label="Senha de Acesso"
-              type="password"
-              fullWidth
-              required
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-              sx={{ mb: 3 }}
-            />
-            <Button
+          {/* Logo e Título */}
+          <div className="flex flex-col items-center text-center mb-8">
+            <div id="hero-logo" className="mb-4">
+              <LogoAnimadaLojas width={110} height={110} animated={true} />
+            </div>
+
+            <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 to-yellow-200 tracking-wider font-sans drop-shadow-[0_0_10px_rgba(234,179,8,0.2)]">
+              E-Sigma: Lojas
+            </h1>
+            <p className="text-sm text-gray-400 mt-2 font-sans">
+              Sistema de Gestão de Oficinas Maçônicas
+            </p>
+          </div>
+
+          {/* Alerta de Erro */}
+          {erro && (
+            <div className="mb-6 p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-xs text-red-200 text-center">
+              {erro}
+            </div>
+          )}
+
+          {/* Formulário */}
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <div className="relative group">
+                <input
+                  type="text"
+                  id="identificador"
+                  autoComplete="username"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder=" "
+                  className="peer w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
+                />
+                <label
+                  htmlFor="identificador"
+                  className="absolute left-12 top-1.5 text-[10px] text-gray-500 transition-all pointer-events-none peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-[10px] peer-focus:text-yellow-500"
+                >
+                  E-mail, CIM ou CPF
+                </label>
+                <UserCircle2 className="w-5 h-5 text-gray-500 absolute left-4 top-3.5 peer-focus:text-yellow-500 transition-colors" />
+              </div>
+            </div>
+
+            <div>
+              <div className="relative group">
+                <input
+                  type="password"
+                  id="senha"
+                  required
+                  value={senha}
+                  onChange={(e) => setSenha(e.target.value)}
+                  placeholder=" "
+                  className="peer w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
+                />
+                <label
+                  htmlFor="senha"
+                  className="absolute left-12 top-1.5 text-[10px] text-gray-500 transition-all pointer-events-none peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-[10px] peer-focus:text-yellow-500"
+                >
+                  Senha
+                </label>
+                <Lock className="w-5 h-5 text-gray-500 absolute left-4 top-3.5 peer-focus:text-yellow-500 transition-colors" />
+              </div>
+            </div>
+
+            <button
               type="submit"
-              variant="contained"
-              color="primary"
-              fullWidth
-              size="large"
               disabled={carregando}
-              sx={{ fontWeight: 700 }}
+              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-black font-bold py-3.5 px-4 rounded-xl text-sm shadow-[0_4px_14px_rgba(234,179,8,0.2)] hover:shadow-[0_6px_20px_rgba(234,179,8,0.4)] transition-all cursor-pointer disabled:opacity-50 mt-4"
             >
-              {carregando ? <CircularProgress size={24} color="inherit" /> : 'Entrar no Sistema'}
-            </Button>
+              {carregando ? (
+                <span>Autenticando...</span>
+              ) : (
+                <span>Acessar Oficina</span>
+              )}
+            </button>
+
+            {/* Recuperação de senha */}
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => navigate('/esqueci-senha')}
+                className="text-xs text-gray-400 hover:text-yellow-500 transition-colors underline"
+              >
+                Esqueci minha senha
+              </button>
+            </div>
+
+            {/* Magic link */}
+            <div className="text-center mt-2">
+              <button
+                type="button"
+                onClick={() => navigate('/entrar-com-link')}
+                className="text-xs text-gray-400 hover:text-yellow-500 transition-colors underline"
+              >
+                Entrar sem senha (link por e-mail)
+              </button>
+            </div>
+
+            {/* Passkey */}
+            <div className="text-center mt-2">
+              <button
+                type="button"
+                onClick={() => navigate('/entrar-com-passkey')}
+                className="text-xs text-gray-400 hover:text-yellow-500 transition-colors underline"
+              >
+                Entrar com passkey
+              </button>
+            </div>
           </form>
-        </CardContent>
-      </Card>
-    </Box>
+
+          {/* Solicitação de Cadastro */}
+          <div className="text-center mt-4">
+            <button
+              type="button"
+              onClick={() => navigate('/solicitar-cadastro')}
+              className="text-xs text-gray-400 hover:text-yellow-500 transition-colors underline"
+            >
+              Ainda não tem cadastro? Solicite seu acesso aqui
+            </button>
+          </div>
+
+          <div className="flex items-center my-6">
+            <div className="flex-1 h-px bg-white/10"></div>
+            <span className="px-4 text-xs text-slate-500">ou</span>
+            <div className="flex-1 h-px bg-white/10"></div>
+          </div>
+
+          <div className="flex justify-center mb-6">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => setErro('Ocorreu um erro ao tentar fazer login com o Google')}
+              theme="filled_black"
+              text="continue_with"
+              width="100%"
+            />
+          </div>
+
+        </div>
+      </div>
+    </div>
   );
 };
+
+export default PaginaLogin;
