@@ -34,11 +34,12 @@ Lojas é o ERP central de gestão das oficinas maçônicas cliente:
 
 - Lojas deveria expor API para seus dados (membros, cargos, diretorias, sessões) para que CoReVM e outros satélites consumam via HTTP — não é esperado que outro módulo leia o schema deste banco diretamente. Se isso ainda acontece hoje (ver contexto do CoReVM), é dívida técnica em migração, não o padrão a seguir daqui para frente.
 
-## 4. UI/UX e Design do Dashboard — Clone Fiel do Sistema Legado
+## 4. UI/UX e Design do Dashboard — Clone de Design do Frontend Legado
 
-- **O Dashboard do módulo Lojas deve ser praticamente um CLONE do dashboard do sistema legado Sigma** (`sigma/frontend`):
-  - A forma de apresentação dos dados, organização de widgets, métricas, tabelas, aniversariantes, sessões e cartões de resumo deve seguir estritamente o modelo visual e a experiência do sistema legado.
-  - Não criar desvios visuais ou reorganizações arbitrárias que distanciem a experiência de uso do dashboard legado já validado.
+- **O Dashboard do módulo Lojas deve ser estritamente um CLONE DE DESIGN DE FRONTEND do sistema legado Sigma** (`sigma/frontend`):
+  - **Escopo do Clone:** Refere-se especificamente à **camada visual de frontend** (layout, hierarquia de cards, grid, posicionamento de tabelas, apresentação de métricas, widgets de aniversariantes, sessões e estética da interface).
+  - **Preservação da Arquitetura:** O backend e a modelagem continuam modernos (`FastAPI`, `lojas_db`, autenticação via `e-Sigma` IdP, `Pydantic v2`). O objetivo é que o usuário final tenha exatamente a mesma experiência visual, familiaridade e conforto do frontend legado consagrado, sem rupturas de UX.
+  - Não criar desvios visuais ou reorganizações arbitrárias que distanciem a apresentação visual do frontend legado já aprovado e validado pelos usuários.
 
 ## 5. Pendências conhecidas do repositório
 

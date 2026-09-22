@@ -60,10 +60,10 @@ Em vez de descentralizar as funcionalidades operacionais da Loja em bancos de da
 - **`CoReVM`:** Módulo regional/Conselho que consome os dados das Lojas via API segura (`x-service-key` / JWT).
 - **`Harmonia`:** Módulo de sonorização litúrgica que consome dados da sessão via API.
 
-### 2.3 Diretriz de Design da Interface (UI/UX - Dashboard Clone):
-- **O Dashboard do Módulo Lojas deve ser praticamente um CLONE do dashboard do sistema legado Sigma** (`sigma/frontend`):
-  - A disposição de dados, widgets, tabelas, cartões de resumo, eventos comemorativos/aniversariantes, sessões e atalhos rápidos deve espelhar fielmente a apresentação visual e funcional do legado.
-  - Qualquer divergência estética deve ser alinhada para convergir ao modelo visual do sistema legado que os usuários já dominam e utilizam no dia a dia.
+### 2.3 Diretriz de Design da Interface (UI/UX - Clone em Termos de Design de Frontend):
+- **O Dashboard do Módulo Lojas deve ser estritamente um CLONE DE DESIGN DE FRONTEND do sistema legado Sigma** (`sigma/frontend`):
+  - **Foco Estrito no Frontend:** A definição de "clone" restringe-se estritamente à **apresentação visual e design de UI/UX** — layout de tela, cartões de resumo, grids, gráficos, tabelas de dados, widgets de aniversariantes, painel de sessões e navegação do dashboard legado.
+  - **Backend e Arquitetura Intactos:** A engenharia de backend segue a arquitetura moderna do ecossistema (`FastAPI`, banco centralizado `lojas_db`, autenticação segura via `e-Sigma` IdP, `Pydantic v2`). O objetivo é unir o melhor dos dois mundos: a solidez da arquitetura moderna com a interface visual consagrada e familiar aos usuários.
 
 ---
 
