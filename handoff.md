@@ -60,6 +60,11 @@ Em vez de descentralizar as funcionalidades operacionais da Loja em bancos de da
 - **`CoReVM`:** Módulo regional/Conselho que consome os dados das Lojas via API segura (`x-service-key` / JWT).
 - **`Harmonia`:** Módulo de sonorização litúrgica que consome dados da sessão via API.
 
+### 2.3 Diretriz de Design da Interface (UI/UX - Dashboard Clone):
+- **O Dashboard do Módulo Lojas deve ser praticamente um CLONE do dashboard do sistema legado Sigma** (`sigma/frontend`):
+  - A disposição de dados, widgets, tabelas, cartões de resumo, eventos comemorativos/aniversariantes, sessões e atalhos rápidos deve espelhar fielmente a apresentação visual e funcional do legado.
+  - Qualquer divergência estética deve ser alinhada para convergir ao modelo visual do sistema legado que os usuários já dominam e utilizam no dia a dia.
+
 ---
 
 ## 3. O que deve ser continuado na próxima sessão

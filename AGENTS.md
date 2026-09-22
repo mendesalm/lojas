@@ -34,7 +34,13 @@ Lojas é o ERP central de gestão das oficinas maçônicas cliente:
 
 - Lojas deveria expor API para seus dados (membros, cargos, diretorias, sessões) para que CoReVM e outros satélites consumam via HTTP — não é esperado que outro módulo leia o schema deste banco diretamente. Se isso ainda acontece hoje (ver contexto do CoReVM), é dívida técnica em migração, não o padrão a seguir daqui para frente.
 
-## 4. Pendências conhecidas do repositório
+## 4. UI/UX e Design do Dashboard — Clone Fiel do Sistema Legado
 
-- Sem `README.md`/`handoff.md`/diretriz de arquitetura própria — criar ao menos um mínimo espelhando o padrão de CoReVM/e-Sigma.
-- Sem testes automatizados confirmados até o momento — endpoints de autenticação/permissão e de dados de cargo/mandato deveriam ganhar cobertura Pytest.
+- **O Dashboard do módulo Lojas deve ser praticamente um CLONE do dashboard do sistema legado Sigma** (`sigma/frontend`):
+  - A forma de apresentação dos dados, organização de widgets, métricas, tabelas, aniversariantes, sessões e cartões de resumo deve seguir estritamente o modelo visual e a experiência do sistema legado.
+  - Não criar desvios visuais ou reorganizações arbitrárias que distanciem a experiência de uso do dashboard legado já validado.
+
+## 5. Pendências conhecidas do repositório
+
+- Migrar os schemas de Finanças, Biblioteca, Classificados, Arquiteto e Patrimônio para `lojas_db`.
+- Alinhar visualmente o dashboard com o clone estrito do legado.
