@@ -6,9 +6,11 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 
 Base = declarative_base()
 
-# Build the path to the .env file in the project root
-dotenv_path = os.path.join(os.path.dirname(__file__), "..", ".env")
-load_dotenv(dotenv_path=dotenv_path)
+# Build paths to load .env from backend and root
+dotenv_backend = os.path.join(os.path.dirname(__file__), ".env")
+dotenv_root = os.path.join(os.path.dirname(__file__), "..", ".env")
+load_dotenv(dotenv_path=dotenv_backend)
+load_dotenv(dotenv_path=dotenv_root)
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 ORIENTE_DB_URL = os.getenv("ORIENTE_DB_URL")

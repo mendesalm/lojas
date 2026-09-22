@@ -26,7 +26,10 @@ import {
   Tab,
   CircularProgress,
   Tooltip,
-  Alert
+  Alert,
+  Paper,
+  useTheme,
+  alpha
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -54,6 +57,7 @@ function CustomTabPanel(props: TabPanelProps) {
 }
 
 export const PaginaQuadroObreiros: React.FC = () => {
+  const theme = useTheme();
   const { lojaAtivaId } = useAuth();
 
   const [obreiros, setObreiros] = useState<any[]>([]);
@@ -174,134 +178,223 @@ export const PaginaQuadroObreiros: React.FC = () => {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+      {/* Cabeçalho da Página */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3.5, flexWrap: 'wrap', gap: 2 }}>
         <Box>
-          <Typography variant="h5" sx={{ fontWeight: 700 }}>
-            Quadro de Obreiros
+          <Typography variant="h4" sx={{ fontWeight: 800, color: 'primary.main', letterSpacing: '-0.5px' }}>
+            Gestão de Membros
           </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Gestão dos membros regulares, dados civis, graus maçônicos e cargos na oficina.
+          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
+            Quadro oficial de obreiros, dados civis, graus e cargos na oficina.
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<AddIcon />}
-          onClick={() => setModalCadastroAberto(true)}
-          sx={{ fontWeight: 600 }}
-        >
-          Novo Obreiro
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={() => setModalCadastroAberto(true)}
+            sx={{
+              fontWeight: 700,
+              textTransform: 'none',
+              borderRadius: '8px',
+              boxShadow: '0 4px 12px rgba(14, 165, 233, 0.3)',
+              '&:hover': {
+                boxShadow: '0 6px 16px rgba(14, 165, 233, 0.4)',
+              }
+            }}
+          >
+            Novo Membro
+          </Button>
+        </Box>
       </Box>
 
-      {/* Barra de Filtros */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent sx={{ py: 2 }}>
-          <Grid container spacing={2} sx={{ alignItems: 'center' }}>
-            <Grid size={{ xs: 12, sm: 8, md: 6 }}>
-              <TextField
-                fullWidth
-                size="small"
-                placeholder="Pesquisar por Nome, CIM, CPF ou E-mail..."
-                value={termoBusca}
-                onChange={(e) => setTermoBusca(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && carregarObreiros()}
-                slotProps={{
-                  input: {
-                    startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1 }} />,
-                  },
+      {/* Barra de Filtros no Padrão Paper do SiGMa */}
+      <Paper
+        elevation={3}
+        sx={{
+          p: 3,
+          mb: 3,
+          borderRadius: '16px',
+          backgroundColor: theme.palette.background.paper,
+          backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+          border: `1px solid ${alpha(theme.palette.divider, 0.1)}`
+        }}
+      >
+        <TextField
+          fullWidth
+          variant="outlined"
+          placeholder="Buscar membro por nome, email ou CIM..."
+          value={termoBusca}
+          onChange={(e) => setTermoBusca(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && carregarObreiros()}
+          sx={{
+            mb: 0,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '12px',
+              backgroundColor: 'transparent',
+              '& fieldset': {
+                borderColor: alpha(theme.palette.divider, 0.2),
+              },
+              '&:hover fieldset': {
+                borderColor: theme.palette.primary.main,
+              },
+            }
+          }}
+          slotProps={{
+            input: {
+              startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1 }} />,
+            }
+          }}
+        />
+
+        <Box sx={{ display: 'flex', gap: 1, mt: 2.5, flexWrap: 'wrap' }}>
+          {['Todos', 'Aprendiz', 'Companheiro', 'Mestre', 'Mestre Instalado'].map((grau) => {
+            const isAtivo = (grau === 'Todos' && !filtroGrau) || filtroGrau === grau;
+            return (
+              <Chip
+                key={grau}
+                label={grau === 'Todos' ? 'Todos os Graus' : grau}
+                onClick={() => setFiltroGrau(grau === 'Todos' ? '' : grau)}
+                sx={{
+                  fontWeight: isAtivo ? 700 : 500,
+                  backgroundColor: isAtivo ? alpha(theme.palette.primary.main, 0.2) : 'transparent',
+                  color: isAtivo ? theme.palette.primary.main : theme.palette.text.secondary,
+                  border: `1px solid ${isAtivo ? theme.palette.primary.main : alpha(theme.palette.divider, 0.2)}`,
+                  borderRadius: '16px',
+                  '&:hover': {
+                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                  }
                 }}
               />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 4, md: 3 }}>
-              <TextField
-                select
-                fullWidth
-                size="small"
-                label="Filtrar por Grau"
-                value={filtroGrau}
-                onChange={(e) => setFiltroGrau(e.target.value)}
-              >
-                <MenuItem value="">Todos os Graus</MenuItem>
-                <MenuItem value="Aprendiz">Aprendiz</MenuItem>
-                <MenuItem value="Companheiro">Companheiro</MenuItem>
-                <MenuItem value="Mestre">Mestre</MenuItem>
-                <MenuItem value="Mestre Instalado">Mestre Instalado</MenuItem>
-              </TextField>
-            </Grid>
-            <Grid size={{ xs: 12, md: 3 }} sx={{ textAlign: { xs: 'left', md: 'right' } }}>
-              <Button variant="outlined" onClick={carregarObreiros} startIcon={<FilterIcon />}>
-                Filtrar
-              </Button>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
+            );
+          })}
+        </Box>
+      </Paper>
 
-      {/* Tabela do Quadro de Membros */}
-      <Card>
-        <TableContainer>
-          <Table>
-            <TableHead sx={{ bgcolor: 'action.hover' }}>
+      {/* Tabela do Quadro de Membros no Padrão Canônico SiGMa (Floating Pill Rows) */}
+      <Paper
+        elevation={3}
+        sx={{
+          backgroundColor: theme.palette.background.paper,
+          backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+          borderRadius: '16px',
+          p: 3,
+          mt: 2
+        }}
+      >
+        <TableContainer
+          component={Box}
+          sx={{
+            backgroundColor: 'transparent',
+            overflowX: 'auto'
+          }}
+        >
+          <Table
+            sx={{
+              borderCollapse: 'separate',
+              borderSpacing: '0 8px',
+              minWidth: 700
+            }}
+          >
+            <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 700 }}>Obreiro</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>CIM</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Grau</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Cargo em Loja</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Contato</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 700 }}>Ações</TableCell>
+                <TableCell sx={{ color: 'text.secondary', fontWeight: '700', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: 'none', py: 1, pl: 3 }}>FOTO</TableCell>
+                <TableCell sx={{ color: 'text.secondary', fontWeight: '700', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: 'none', py: 1 }}>CIM</TableCell>
+                <TableCell sx={{ color: 'text.secondary', fontWeight: '700', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: 'none', py: 1 }}>NOME COMPLETO</TableCell>
+                <TableCell sx={{ color: 'text.secondary', fontWeight: '700', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: 'none', py: 1 }}>GRAU SIMBÓLICO</TableCell>
+                <TableCell sx={{ color: 'text.secondary', fontWeight: '700', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: 'none', py: 1 }}>CARGO EM LOJA</TableCell>
+                <TableCell sx={{ color: 'text.secondary', fontWeight: '700', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: 'none', py: 1 }}>CONTATO</TableCell>
+                <TableCell sx={{ color: 'text.secondary', fontWeight: '700', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: 'none', py: 1 }}>STATUS</TableCell>
+                <TableCell sx={{ color: 'text.secondary', fontWeight: '700', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: 'none', py: 1, textAlign: 'right', pr: 3 }}>AÇÃO</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {carregando ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                  <TableCell colSpan={8} align="center" sx={{ py: 6, borderBottom: 'none' }}>
                     <CircularProgress color="primary" />
                   </TableCell>
                 </TableRow>
               ) : obreiros.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 6, color: 'text.secondary' }}>
+                  <TableCell colSpan={8} align="center" sx={{ py: 6, color: 'text.secondary', borderBottom: 'none' }}>
                     Nenhum obreiro encontrado com os filtros aplicados.
                   </TableCell>
                 </TableRow>
               ) : (
                 obreiros.map((ob) => (
-                  <TableRow key={ob.id} hover>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <Avatar
-                          src={ob.caminho_foto_perfil}
-                          sx={{ width: 38, height: 38, bgcolor: 'primary.main', color: 'primary.contrastText', fontWeight: 700 }}
-                        >
-                          {ob.nome_completo.charAt(0)}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                            {ob.nome_completo}
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                            {ob.email}
-                          </Typography>
-                        </Box>
-                      </Box>
+                  <TableRow
+                    key={ob.id}
+                    sx={{
+                      backgroundColor: alpha(theme.palette.background.paper, 0.7),
+                      '&:hover': {
+                        backgroundColor: alpha(theme.palette.background.paper, 0.9),
+                        transform: 'translateY(-1px)',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.25)'
+                      },
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <TableCell
+                      sx={{
+                        borderBottom: 'none',
+                        py: 1,
+                        pl: 3,
+                        borderTopLeftRadius: '50px',
+                        borderBottomLeftRadius: '50px',
+                        color: 'text.primary'
+                      }}
+                    >
+                      <Avatar
+                        src={ob.caminho_foto_perfil ? `${import.meta.env.VITE_LOJAS_API_URL || 'http://localhost:8001'}${ob.caminho_foto_perfil}` : undefined}
+                        alt={ob.nome_completo}
+                        sx={{
+                          width: 34,
+                          height: 34,
+                          border: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
+                          bgcolor: 'primary.dark',
+                          color: '#fff',
+                          fontSize: '0.85rem',
+                          fontWeight: 700
+                        }}
+                      >
+                        {ob.nome_completo.charAt(0)}
+                      </Avatar>
                     </TableCell>
-                    <TableCell sx={{ fontFamily: 'monospace', fontWeight: 600 }}>
+
+                    <TableCell sx={{ borderBottom: 'none', py: 1, fontSize: '0.8rem', fontWeight: 600, color: 'text.primary', fontFamily: 'monospace' }}>
                       {ob.cim || '—'}
                     </TableCell>
-                    <TableCell>
-                      <Chip label={ob.grau || 'Aprendiz'} size="small" color={obterCorGrau(ob.grau) as any} />
+
+                    <TableCell sx={{ borderBottom: 'none', py: 1, fontSize: '0.85rem', fontWeight: 600, color: 'text.primary' }}>
+                      {ob.nome_completo}
                     </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: ob.cargo_atual ? 600 : 400, color: ob.cargo_atual ? 'primary.main' : 'text.secondary' }}>
-                        {ob.cargo_atual || 'Membro do Quadro'}
-                      </Typography>
+
+                    <TableCell sx={{ borderBottom: 'none', py: 1 }}>
+                      <Chip
+                        label={ob.grau || 'Aprendiz'}
+                        size="small"
+                        sx={{
+                          height: '22px',
+                          fontSize: '0.7rem',
+                          fontWeight: 600,
+                          bgcolor: ob.grau === 'Aprendiz' ? 'rgba(34, 197, 94, 0.15)' : ob.grau === 'Companheiro' ? 'rgba(56, 189, 248, 0.15)' : 'rgba(212, 175, 55, 0.15)',
+                          color: ob.grau === 'Aprendiz' ? '#22c55e' : ob.grau === 'Companheiro' ? '#38bdf8' : '#D4AF37',
+                          border: `1px solid ${ob.grau === 'Aprendiz' ? 'rgba(34, 197, 94, 0.3)' : ob.grau === 'Companheiro' ? 'rgba(56, 189, 248, 0.3)' : 'rgba(212, 175, 55, 0.3)'}`,
+                          borderRadius: '12px'
+                        }}
+                      />
                     </TableCell>
-                    <TableCell>
+
+                    <TableCell sx={{ borderBottom: 'none', py: 1, fontSize: '0.8rem', color: ob.cargo_atual ? '#D4AF37' : 'text.secondary', fontWeight: ob.cargo_atual ? 600 : 400 }}>
+                      {ob.cargo_atual || 'Membro do Quadro'}
+                    </TableCell>
+
+                    <TableCell sx={{ borderBottom: 'none', py: 1 }}>
                       <Box sx={{ display: 'flex', gap: 1 }}>
                         {ob.telefone && (
-                          <Tooltip title="Abrir WhatsApp">
+                          <Tooltip title={`WhatsApp: ${ob.telefone}`}>
                             <IconButton
                               size="small"
                               color="success"
@@ -314,7 +407,7 @@ export const PaginaQuadroObreiros: React.FC = () => {
                           </Tooltip>
                         )}
                         {ob.email && (
-                          <Tooltip title="Enviar E-mail">
+                          <Tooltip title={`E-mail: ${ob.email}`}>
                             <IconButton
                               size="small"
                               color="inherit"
@@ -327,15 +420,51 @@ export const PaginaQuadroObreiros: React.FC = () => {
                         )}
                       </Box>
                     </TableCell>
-                    <TableCell>
-                      <Chip label={ob.status || 'Ativo'} size="small" variant="outlined" color={ob.status === 'Ativo' ? 'success' : 'default'} />
+
+                    <TableCell sx={{ borderBottom: 'none', py: 1 }}>
+                      <Chip
+                        label={ob.status || 'Ativo'}
+                        size="small"
+                        sx={{
+                          height: '22px',
+                          fontSize: '0.7rem',
+                          backgroundColor: (ob.status === 'Ativo' || !ob.status) ? '#22c55e' : alpha(theme.palette.warning.main, 0.8),
+                          color: '#fff',
+                          fontWeight: 700,
+                          borderRadius: '12px',
+                          px: 1
+                        }}
+                      />
                     </TableCell>
-                    <TableCell align="center">
-                      <Tooltip title="Visualizar Ficha Completa">
-                        <IconButton color="primary" onClick={() => abrirDetalhe(ob.id)}>
-                          <VisibilityIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
+
+                    <TableCell
+                      sx={{
+                        borderBottom: 'none',
+                        py: 1,
+                        textAlign: 'right',
+                        pr: 3,
+                        borderTopRightRadius: '50px',
+                        borderBottomRightRadius: '50px'
+                      }}
+                    >
+                      <Button
+                        variant="text"
+                        size="small"
+                        onClick={() => abrirDetalhe(ob.id)}
+                        sx={{
+                          color: 'primary.main',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          minWidth: 'auto',
+                          padding: '4px 10px',
+                          textTransform: 'none',
+                          '&:hover': {
+                            backgroundColor: 'rgba(56, 189, 248, 0.1)'
+                          }
+                        }}
+                      >
+                        Detalhes
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))
@@ -343,7 +472,7 @@ export const PaginaQuadroObreiros: React.FC = () => {
             </TableBody>
           </Table>
         </TableContainer>
-      </Card>
+      </Paper>
 
       {/* Modal: Ficha Detalhada do Obreiro */}
       <Dialog

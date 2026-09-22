@@ -259,3 +259,15 @@ def test_hierarquia_busca_loja():
     assert dados["loja"]["nome_loja"] == "João Pedro Junqueira"
     assert dados["potencia"]["sigla"] == "GOB"
 
+
+def test_obter_dados_cadastrais_loja():
+    """Testa a rota de obtenção dos dados cadastrais da loja no lojas_db."""
+    res = client.get("/api/v1/lojas/2181")
+    assert res.status_code == 200
+    dados = res.json()
+    assert dados["nome_loja"] == "João Pedro Junqueira"
+    assert dados["numero_loja"] == "2181"
+    assert dados["potencia_nome"] == "Grande Oriente do Brasil"
+    assert "Grande Oriente do Brasil" in dados.get("filiacao_formatada", "")
+
+

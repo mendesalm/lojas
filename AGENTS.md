@@ -8,11 +8,20 @@
 
 ## 1. Escopo do módulo
 
-Lojas é o módulo de gestão interna de membros da organização cliente:
-cadastro de Obreiros e familiares, histórico de cargos, condecorações,
-diretorias, comissões e sessões. Financeiro, biblioteca e classificados
-**não pertencem aqui** — são módulos satélites próprios. CoReVM é outro
-consumidor deste módulo, não uma camada acima dele.
+Lojas é o ERP central de gestão das oficinas maçônicas cliente:
+- Cadastro de Obreiros e familiares, histórico de cargos, condecorações, diretorias, comissões e sessões.
+- **DEFINIÇÃO DE ARQUITETURA E IMPLANTAÇÃO (2026-09-22):** O módulo Lojas **volta a incorporar** formalmente os domínios de:
+  1. **Finanças** (Tesouraria, fluxo de caixa, mensalidades, balancetes);
+  2. **Biblioteca** (Acervo, empréstimos, catalogação);
+  3. **Classificados** (Mural de anúncios e oportunidades internas);
+  4. **Arquiteto** (Planejamento de obras, reformas e infraestrutura);
+  5. **Patrimônio** (Inventário de bens, alfaias, paramentos e patrimônio físico da Loja).
+
+> **Racional Arquitetural:** A separação desses domínios em múltiplos bancos de dados satélites gerava complexidade excessiva de sincronização, transações distribuídas e redundância de conexões. O banco `lojas_db` é o repositório mestre e consolidado do ERP de Lojas.
+> **Papéis no Ecossistema:**
+> - **`lojas_db`**: Dono do cadastro de Lojas, Obreiros e dos dados operacionais da Loja (Finanças, Biblioteca, Classificados, Arquiteto, Patrimônio, Sessões).
+> - **`e-Sigma`**: Provedor central de Identidade (IdP) e gestão de assinaturas SaaS.
+> - **`CoReVM`**: Módulo de gestão regional/Conselho, consumidor de Lojas via API.
 
 ## 2. Segurança — nunca, em nenhuma circunstância
 

@@ -26,7 +26,7 @@ from fastapi import Header, HTTPException
 
 logger = logging.getLogger("lojas.auth_esigma")
 
-ESIGMA_API_BASE_URL = os.getenv("ESIGMA_API_BASE_URL", "").rstrip("/")
+ESIGMA_API_BASE_URL = os.getenv("ESIGMA_API_BASE_URL", "http://localhost:8000/api/v1").rstrip("/")
 ESIGMA_VALIDATE_TIMEOUT_SEGUNDOS = float(os.getenv("ESIGMA_VALIDATE_TIMEOUT_SEGUNDOS", "5"))
 ESIGMA_VALIDATE_CACHE_TTL_SEGUNDOS = float(os.getenv("ESIGMA_VALIDATE_CACHE_TTL_SEGUNDOS", "30"))
 
@@ -76,6 +76,10 @@ class UsuarioEsigma:
     @property
     def is_super_admin(self) -> bool:
         return self.role == "super_admin"
+
+    @property
+    def loja_id(self) -> Optional[str]:
+        return self.organizacao_id
 
     @property
     def identificador_negocio(self) -> Optional[str]:

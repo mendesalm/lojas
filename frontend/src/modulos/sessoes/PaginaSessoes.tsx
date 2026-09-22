@@ -27,7 +27,10 @@ import {
   List,
   ListItem,
   ListItemText,
-  Divider
+  Divider,
+  Paper,
+  useTheme,
+  alpha
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -135,28 +138,77 @@ export const PaginaSessoes: React.FC = () => {
     }
   };
 
+  const theme = useTheme();
+  const [filtroStatus, setFiltroStatus] = useState('');
+  const [filtroDataInicio, setFiltroDataInicio] = useState('');
+  const [filtroDataFim, setFiltroDataFim] = useState('');
+
+  const sessoesFiltradas = sessoes.filter((s) => {
+    if (filtroStatus && s.status !== filtroStatus) return false;
+    if (filtroDataInicio && s.data_sessao < filtroDataInicio) return false;
+    if (filtroDataFim && s.data_sessao > filtroDataFim) return false;
+    return true;
+  });
+
   const obterChipStatus = (status: string) => {
     switch (status) {
       case 'EM_ANDAMENTO':
-        return <Chip label="Em Andamento" color="success" size="small" sx={{ fontWeight: 700 }} />;
+        return (
+          <Chip
+            label="Em Andamento"
+            size="small"
+            sx={{
+              fontWeight: 700,
+              bgcolor: 'rgba(34, 197, 94, 0.15)',
+              color: '#22c55e',
+              border: '1px solid rgba(34, 197, 94, 0.3)',
+              borderRadius: '12px'
+            }}
+          />
+        );
       case 'AGENDADA':
-        return <Chip label="Agendada" color="primary" size="small" variant="outlined" />;
+        return (
+          <Chip
+            label="Agendada"
+            size="small"
+            sx={{
+              fontWeight: 700,
+              bgcolor: 'rgba(56, 189, 248, 0.15)',
+              color: '#38bdf8',
+              border: '1px solid rgba(56, 189, 248, 0.3)',
+              borderRadius: '12px'
+            }}
+          />
+        );
       case 'ENCERRADA':
       case 'REALIZADA':
-        return <Chip label="Encerrada" size="small" />;
+        return (
+          <Chip
+            label="Realizada"
+            size="small"
+            sx={{
+              fontWeight: 600,
+              bgcolor: 'rgba(148, 163, 184, 0.15)',
+              color: theme.palette.text.secondary,
+              border: `1px solid ${theme.palette.divider}`,
+              borderRadius: '12px'
+            }}
+          />
+        );
       default:
-        return <Chip label={status} size="small" />;
+        return <Chip label={status} size="small" sx={{ borderRadius: '12px' }} />;
     }
   };
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+      {/* Cabeçalho da Página */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3.5, flexWrap: 'wrap', gap: 2 }}>
         <Box>
-          <Typography variant="h5" sx={{ fontWeight: 700 }}>
-            Sessões Maçônicas & Frequência
+          <Typography variant="h4" sx={{ fontWeight: 800, color: 'primary.main', letterSpacing: '-0.5px' }}>
+            Sessões Maçônicas
           </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
             Agendamento litúrgico, controle de presenças em tempo real e livro de chamada.
           </Typography>
         </Box>
@@ -165,46 +217,168 @@ export const PaginaSessoes: React.FC = () => {
           color="primary"
           startIcon={<AddIcon />}
           onClick={() => setModalAgendamentoAberto(true)}
-          sx={{ fontWeight: 600 }}
+          sx={{
+            fontWeight: 700,
+            textTransform: 'none',
+            borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(14, 165, 233, 0.3)',
+            '&:hover': {
+              boxShadow: '0 6px 16px rgba(14, 165, 233, 0.4)',
+            }
+          }}
         >
-          Agendar Sessão
+          Nova Sessão
         </Button>
       </Box>
 
-      {/* Tabela de Sessões */}
-      <Card>
-        <TableContainer>
-          <Table>
-            <TableHead sx={{ bgcolor: 'action.hover' }}>
+      {/* Barra de Filtros no Padrão SiGMa */}
+      <Paper
+        elevation={3}
+        sx={{
+          p: 3,
+          mb: 3,
+          borderRadius: '16px',
+          backgroundColor: theme.palette.background.paper,
+          backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+          border: `1px solid ${alpha(theme.palette.divider, 0.1)}`
+        }}
+      >
+        <Grid container spacing={2} sx={{ alignItems: 'center' }}>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <TextField
+              label="Data Início"
+              type="date"
+              size="small"
+              fullWidth
+              slotProps={{ inputLabel: { shrink: true } }}
+              value={filtroDataInicio}
+              onChange={(e) => setFiltroDataInicio(e.target.value)}
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <TextField
+              label="Data Fim"
+              type="date"
+              size="small"
+              fullWidth
+              slotProps={{ inputLabel: { shrink: true } }}
+              value={filtroDataFim}
+              onChange={(e) => setFiltroDataFim(e.target.value)}
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <TextField
+              select
+              label="Status da Sessão"
+              size="small"
+              fullWidth
+              value={filtroStatus}
+              onChange={(e) => setFiltroStatus(e.target.value)}
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+            >
+              <MenuItem value="">Todos os Status</MenuItem>
+              <MenuItem value="AGENDADA">Agendada</MenuItem>
+              <MenuItem value="EM_ANDAMENTO">Em Andamento</MenuItem>
+              <MenuItem value="ENCERRADA">Encerrada / Realizada</MenuItem>
+            </TextField>
+          </Grid>
+        </Grid>
+
+        <Box sx={{ display: 'flex', gap: 1, mt: 2.5, flexWrap: 'wrap' }}>
+          {['Todos', 'AGENDADA', 'EM_ANDAMENTO', 'ENCERRADA'].map((st) => {
+            const isAtivo = (st === 'Todos' && !filtroStatus) || filtroStatus === st;
+            const label = st === 'Todos' ? 'Todas as Sessões' : st === 'AGENDADA' ? 'Agendadas' : st === 'EM_ANDAMENTO' ? 'Em Andamento' : 'Realizadas';
+            return (
+              <Chip
+                key={st}
+                label={label}
+                onClick={() => setFiltroStatus(st === 'Todos' ? '' : st)}
+                sx={{
+                  fontWeight: isAtivo ? 700 : 500,
+                  backgroundColor: isAtivo ? alpha(theme.palette.primary.main, 0.2) : 'transparent',
+                  color: isAtivo ? theme.palette.primary.main : theme.palette.text.secondary,
+                  border: `1px solid ${isAtivo ? theme.palette.primary.main : alpha(theme.palette.divider, 0.2)}`,
+                  borderRadius: '16px',
+                  '&:hover': {
+                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                  }
+                }}
+              />
+            );
+          })}
+        </Box>
+      </Paper>
+
+      {/* Tabela de Sessões no Padrão Canônico SiGMa (Floating Pill Rows) */}
+      <Paper
+        elevation={3}
+        sx={{
+          backgroundColor: theme.palette.background.paper,
+          backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
+          borderRadius: '16px',
+          p: 3,
+          mt: 2
+        }}
+      >
+        <TableContainer component={Box} sx={{ backgroundColor: 'transparent', overflowX: 'auto' }}>
+          <Table sx={{ borderCollapse: 'separate', borderSpacing: '0 8px', minWidth: 700 }}>
+            <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 700 }}>Data</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Sessão</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Tipo / Subtipo</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Horário</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Presentes</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 700 }}>Ações</TableCell>
+                <TableCell sx={{ color: 'text.secondary', fontWeight: '700', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: 'none', py: 1, pl: 3 }}>DATA</TableCell>
+                <TableCell sx={{ color: 'text.secondary', fontWeight: '700', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: 'none', py: 1 }}>TÍTULO DA SESSÃO</TableCell>
+                <TableCell sx={{ color: 'text.secondary', fontWeight: '700', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: 'none', py: 1 }}>TIPO / GRAU</TableCell>
+                <TableCell sx={{ color: 'text.secondary', fontWeight: '700', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: 'none', py: 1 }}>HORÁRIO</TableCell>
+                <TableCell sx={{ color: 'text.secondary', fontWeight: '700', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: 'none', py: 1 }}>PRESENTES</TableCell>
+                <TableCell sx={{ color: 'text.secondary', fontWeight: '700', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: 'none', py: 1 }}>STATUS</TableCell>
+                <TableCell sx={{ color: 'text.secondary', fontWeight: '700', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: 'none', py: 1, textAlign: 'right', pr: 3 }}>AÇÕES</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {carregando ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                  <TableCell colSpan={7} align="center" sx={{ py: 6, borderBottom: 'none' }}>
                     <CircularProgress color="primary" />
                   </TableCell>
                 </TableRow>
-              ) : sessoes.length === 0 ? (
+              ) : sessoesFiltradas.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 6, color: 'text.secondary' }}>
-                    Nenhuma sessão agendada no histórico.
+                  <TableCell colSpan={7} align="center" sx={{ py: 6, color: 'text.secondary', borderBottom: 'none' }}>
+                    Nenhuma sessão encontrada para os filtros aplicados.
                   </TableCell>
                 </TableRow>
               ) : (
-                sessoes.map((s) => (
-                  <TableRow key={s.id} hover>
-                    <TableCell sx={{ fontWeight: 600 }}>{s.data_sessao}</TableCell>
-                    <TableCell>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                sessoesFiltradas.map((s) => (
+                  <TableRow
+                    key={s.id}
+                    sx={{
+                      backgroundColor: alpha(theme.palette.background.paper, 0.7),
+                      '&:hover': {
+                        backgroundColor: alpha(theme.palette.background.paper, 0.9),
+                        transform: 'translateY(-1px)',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.25)'
+                      },
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <TableCell
+                      sx={{
+                        borderBottom: 'none',
+                        py: 1.2,
+                        pl: 3,
+                        borderTopLeftRadius: '50px',
+                        borderBottomLeftRadius: '50px',
+                        fontWeight: 700,
+                        fontSize: '0.85rem',
+                        color: 'primary.main',
+                      }}
+                    >
+                      {new Date(s.data_sessao).toLocaleDateString('pt-BR')}
+                    </TableCell>
+
+                    <TableCell sx={{ borderBottom: 'none', py: 1.2 }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600, color: 'text.primary', fontSize: '0.88rem' }}>
                         {s.titulo}
                       </Typography>
                       {s.numero_sessao && (
@@ -213,27 +387,68 @@ export const PaginaSessoes: React.FC = () => {
                         </Typography>
                       )}
                     </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">{s.tipo}</Typography>
-                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>{s.subtipo}</Typography>
+
+                    <TableCell sx={{ borderBottom: 'none', py: 1.2 }}>
+                      <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'text.primary' }}>
+                        {s.tipo}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                        {s.subtipo || 'Regular'}
+                      </Typography>
                     </TableCell>
-                    <TableCell>{s.hora_inicio || '20:00'}</TableCell>
-                    <TableCell>
+
+                    <TableCell sx={{ borderBottom: 'none', py: 1.2, fontSize: '0.85rem', color: 'text.secondary' }}>
+                      {s.hora_inicio || '20:00'}
+                    </TableCell>
+
+                    <TableCell sx={{ borderBottom: 'none', py: 1.2 }}>
                       <Chip
                         label={`${s.total_presentes || 0} Irmãos`}
                         size="small"
-                        color="default"
                         icon={<PresentIcon sx={{ fontSize: 16 }} />}
+                        sx={{
+                          height: '22px',
+                          fontSize: '0.72rem',
+                          borderRadius: '12px',
+                          bgcolor: alpha(theme.palette.divider, 0.2),
+                          color: 'text.primary'
+                        }}
                       />
                     </TableCell>
-                    <TableCell>{obterChipStatus(s.status)}</TableCell>
-                    <TableCell align="center">
-                      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
-                        <Tooltip title="Abrir Livro de Presença">
-                          <IconButton color="primary" size="small" onClick={() => abrirDetalheSessao(s.id)}>
-                            <VisibilityIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
+
+                    <TableCell sx={{ borderBottom: 'none', py: 1.2 }}>
+                      {obterChipStatus(s.status)}
+                    </TableCell>
+
+                    <TableCell
+                      sx={{
+                        borderBottom: 'none',
+                        py: 1.2,
+                        textAlign: 'right',
+                        pr: 3,
+                        borderTopRightRadius: '50px',
+                        borderBottomRightRadius: '50px'
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 0.5 }}>
+                        <Button
+                          variant="text"
+                          size="small"
+                          onClick={() => abrirDetalheSessao(s.id)}
+                          sx={{
+                            color: 'primary.main',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            minWidth: 'auto',
+                            padding: '4px 8px',
+                            textTransform: 'none',
+                            '&:hover': {
+                              backgroundColor: 'rgba(56, 189, 248, 0.1)'
+                            }
+                          }}
+                        >
+                          Presenças
+                        </Button>
                         {s.status === 'AGENDADA' && (
                           <Tooltip title="Iniciar Sessão (Abrir Trabalhos)">
                             <IconButton color="success" size="small" onClick={() => alterarStatusSessao(s.id, 'EM_ANDAMENTO')}>
@@ -256,7 +471,7 @@ export const PaginaSessoes: React.FC = () => {
             </TableBody>
           </Table>
         </TableContainer>
-      </Card>
+      </Paper>
 
       {/* Modal: Detalhes da Sessão & Livro de Presença */}
       <Dialog

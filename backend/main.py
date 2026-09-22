@@ -14,6 +14,7 @@ from api.v1.hierarquia_rotas import router as hierarquia_router
 from api.v1.obreiros_rotas import router as obreiros_router
 from api.v1.sessoes_rotas import router as sessoes_router
 from api.v1.lojas_admin_rotas import router as lojas_admin_router
+from api.v1.dashboard_rotas import router as dashboard_router
 
 # Ensure tables are created (in a real app, use Alembic)
 # Base.metadata.create_all(bind=engine)
@@ -37,6 +38,7 @@ app.include_router(hierarquia_router, prefix="/api/v1")
 app.include_router(obreiros_router, prefix="/api/v1")
 app.include_router(sessoes_router, prefix="/api/v1")
 app.include_router(lojas_admin_router, prefix="/api/v1")
+app.include_router(dashboard_router, prefix="/api/v1")
 
 @app.get("/")
 def read_root():

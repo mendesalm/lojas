@@ -9,16 +9,35 @@ export interface Usuario {
   roles: string[];
   cim?: string;
   cpf?: string;
-  loja_id?: number;
+  loja_id?: string | number;
+  user_type?: string;
+  role?: string;
+  active_role_name?: string;
+}
+
+export interface LojaItem {
+  id: number;
+  codigo_loja: string;
+  nome_loja: string;
+  numero_loja: string;
+  titulo_loja: string;
+  rito: string;
+  filiacao?: string;
+  cargo?: string;
+  classe?: string;
+  status?: string;
 }
 
 interface AuthContextType {
   usuario: Usuario | null;
   token: string | null;
   carregando: boolean;
-  lojaAtivaId: number;
-  definirLojaAtivaId: (id: number) => void;
-  setLojaAtivaId: (id: number) => void;
+  lojaAtivaId: string | number;
+  definirLojaAtivaId: (id: string | number) => void;
+  setLojaAtivaId: (id: string | number) => void;
+  lojasDisponiveis: LojaItem[];
+  carregarLojasDisponiveis: (tokenOverride?: string) => Promise<LojaItem[]>;
+  selecionarLoja: (loja: LojaItem) => void;
   login: (token: string, usuarioData: Usuario) => void;
   logout: () => void;
   modoTema: 'dark' | 'light';
@@ -92,8 +111,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(true);
-  const [lojaAtivaId, setLojaAtivaId] = useState<number>(2181); // Padrão: Loja 2181 (João Pedro Junqueira)
+  const [lojaAtivaId, setLojaAtivaIdState] = useState<string | number>(() => {
+    return localStorage.getItem('@lojas:loja_ativa_id') || 2181;
+  });
+  const [lojasDisponiveis, setLojasDisponiveis] = useState<LojaItem[]>([]);
   const [modoTema, setModoTema] = useState<'dark' | 'light'>('dark');
+
+  const setLojaAtivaId = (id: string | number) => {
+    setLojaAtivaIdState(id);
+    localStorage.setItem('@lojas:loja_ativa_id', String(id));
+  };
 
   const alternarModoTema = () => {
     setModoTema((prev) => {
@@ -101,6 +128,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('@lojas:tema', proximo);
       return proximo;
     });
+  };
+
+  const carregarLojasDisponiveis = async (tokenOverride?: string): Promise<LojaItem[]> => {
+    try {
+      const headers = tokenOverride ? { Authorization: `Bearer ${tokenOverride}` } : {};
+      const res = await clienteHttp.get('/minhas-lojas', { headers });
+      const lista: LojaItem[] = res.data || [];
+      setLojasDisponiveis(lista);
+      if (lista.length > 0) {
+        const salva = localStorage.getItem('@lojas:loja_ativa_id');
+        const encontrada = salva ? lista.find(l => String(l.id) === salva || l.codigo_loja === salva) : null;
+        if (encontrada) {
+          setLojaAtivaId(encontrada.codigo_loja || encontrada.id);
+        } else {
+          // Prioriza a loja 2181 se existir
+          const loja2181 = lista.find(l => String(l.numero_loja) === '2181');
+          const escolhida = loja2181 || lista[0];
+          setLojaAtivaId(escolhida.codigo_loja || escolhida.id);
+        }
+      }
+      return lista;
+    } catch (err) {
+      console.error('Erro ao carregar lojas disponíveis:', err);
+      return [];
+    }
+  };
+
+  const selecionarLoja = (loja: LojaItem) => {
+    const id = loja.codigo_loja || loja.id;
+    setLojaAtivaId(id);
   };
 
   useEffect(() => {
@@ -126,10 +183,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           cim: payload.cim,
           cpf: payload.cpf,
           loja_id: payload.loja_id || 2181,
+          user_type: payload.user_type || (payload.role === 'super_admin' ? 'super_admin' : 'member'),
+          role: payload.role || (payload.roles && payload.roles[0]) || 'obreiro',
+          active_role_name: payload.active_role_name || payload.cargo || '',
         });
-        if (payload.loja_id) {
-          setLojaAtivaId(payload.loja_id);
-        }
+
+        // Carrega lojas associadas do obreiro
+        carregarLojasDisponiveis();
       } catch (err) {
         console.error('Erro ao decodificar token:', err);
       }
@@ -144,12 +204,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (usuarioData.loja_id) {
       setLojaAtivaId(usuarioData.loja_id);
     }
+    carregarLojasDisponiveis();
   };
 
   const logout = () => {
     setToken(null);
     setUsuario(null);
+    setLojasDisponiveis([]);
     localStorage.removeItem('@lojas:token');
+    localStorage.removeItem('@lojas:loja_ativa_id');
   };
 
   return (
@@ -161,6 +224,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         lojaAtivaId,
         definirLojaAtivaId: setLojaAtivaId,
         setLojaAtivaId,
+        lojasDisponiveis,
+        carregarLojasDisponiveis,
+        selecionarLoja,
         login,
         logout,
         modoTema,

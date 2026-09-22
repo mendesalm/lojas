@@ -24,7 +24,7 @@ from sqlalchemy.orm import Session
 
 from core.auth_esigma import UsuarioEsigma, obter_usuario_esigma
 from database import get_db
-from models.models import Mandato, Obreiro, Webmaster
+from models.models import Mandato, Obreiro, Webmaster, StatusObreiroEnum, ObreiroLojaAssociacao
 
 CARGO_ID_VENERAVEL_MESTRE = 1
 
@@ -89,41 +89,23 @@ def _e_webmaster_da_loja(db: Session, usuario: UsuarioEsigma, loja_id: int) -> b
     return webmaster is not None
 
 
+from core.resolver_loja import resolver_loja_id_ou_404
+
 def exigir_vm_ou_webmaster_da_loja(
-    loja_id: int,
+    loja_id: str,
     contexto: tuple[UsuarioEsigma, Optional[Obreiro]] = Depends(get_usuario_e_obreiro),
     db: Session = Depends(get_db),
 ) -> tuple[UsuarioEsigma, Optional[Obreiro]]:
-    """Dependência FastAPI "nativa" (não uma factory por closure — `loja_id`
-    é declarado aqui como parâmetro próprio, e o FastAPI o resolve sozinho a
-    partir do path da rota que a usa, casando pelo nome). Bloqueia a rota
-    para qualquer chamador que não seja (a) o Venerável Mestre em exercício
-    da própria Loja, (b) um Webmaster daquela Loja, ou (c) um SuperAdmin do
-    e-Sigma. Mesmo espírito de defesa em profundidade já usado no CoReVM
-    (`_exigir_vm_da_loja_ou_diretoria`): a checagem de escopo acontece no
-    backend, nunca só na UI.
-
-    Nota de implementação: uma versão anterior desta dependência era uma
-    "dependency factory" (`def exigir_...(loja_id): def dependencia(...):
-    ...; return dependencia`) chamada como `Depends(exigir_...(loja_id))`
-    diretamente no valor-padrão de um parâmetro de rota — isso não
-    funcionaria: o valor de `loja_id` usado nessa chamada seria avaliado na
-    definição da função de rota (quando o `def` roda), não a cada
-    requisição, e nesse momento não existe nenhum `loja_id` no escopo (ele é
-    só um outro parâmetro do mesmo `def`, ainda não vinculado) — resultaria
-    em `NameError` já na importação do módulo. Corrigido antes de ir para
-    produção, adotando o padrão de dependência com parâmetro próprio que o
-    FastAPI já resolve automaticamente pelo path.
-    """
+    loja_id_int = resolver_loja_id_ou_404(db, loja_id)
     usuario, obreiro = contexto
 
     if usuario.is_super_admin:
         return contexto
 
-    if _e_webmaster_da_loja(db, usuario, loja_id):
+    if _e_webmaster_da_loja(db, usuario, loja_id_int):
         return contexto
 
-    if obreiro is not None and _e_vm_em_exercicio_da_loja(db, obreiro.id, loja_id):
+    if obreiro is not None and _e_vm_em_exercicio_da_loja(db, obreiro.id, loja_id_int):
         return contexto
 
     raise HTTPException(
@@ -150,26 +132,31 @@ def _possui_cargos_na_loja(db: Session, obreiro_id: int, loja_id: int, cargo_ids
 
 
 def exigir_membro_ou_diretoria_da_loja(
-    loja_id: int,
+    loja_id: str,
     contexto: tuple[UsuarioEsigma, Optional[Obreiro]] = Depends(get_usuario_e_obreiro),
     db: Session = Depends(get_db),
 ) -> tuple[UsuarioEsigma, Optional[Obreiro]]:
     """Garante que o usuário pertence à Loja (como obreiro ativo), é Webmaster, ou SuperAdmin."""
+    loja_id_int = resolver_loja_id_ou_404(db, loja_id)
     usuario, obreiro = contexto
 
     if usuario.is_super_admin:
         return contexto
 
-    if _e_webmaster_da_loja(db, usuario, loja_id):
+    # Se a loja ativa no token JWT do e-Sigma bate com o identificador da loja
+    if usuario.loja_id and str(usuario.loja_id) == str(loja_id):
+        return contexto
+
+    if _e_webmaster_da_loja(db, usuario, loja_id_int):
         return contexto
 
     if obreiro is not None:
         assoc = (
-            db.query(Obreiro)
-            .join(Obreiro.associacoes_loja)
+            db.query(ObreiroLojaAssociacao)
             .filter(
-                Obreiro.id == obreiro.id,
-                Obreiro.associacoes_loja.any(loja_id=loja_id, status=StatusObreiroEnum.ATIVO)
+                ObreiroLojaAssociacao.obreiro_id == obreiro.id,
+                ObreiroLojaAssociacao.loja_id == loja_id_int,
+                ObreiroLojaAssociacao.status == StatusObreiroEnum.ATIVO
             )
             .first()
         )
@@ -183,22 +170,23 @@ def exigir_membro_ou_diretoria_da_loja(
 
 
 def exigir_secretaria_ou_vm_da_loja(
-    loja_id: int,
+    loja_id: str,
     contexto: tuple[UsuarioEsigma, Optional[Obreiro]] = Depends(get_usuario_e_obreiro),
     db: Session = Depends(get_db),
 ) -> tuple[UsuarioEsigma, Optional[Obreiro]]:
     """Permite acesso a ações da Secretaria (Venerável Mestre, Secretário [cargo_id=5], Webmaster ou SuperAdmin)."""
+    loja_id_int = resolver_loja_id_ou_404(db, loja_id)
     usuario, obreiro = contexto
 
     if usuario.is_super_admin:
         return contexto
 
-    if _e_webmaster_da_loja(db, usuario, loja_id):
+    if _e_webmaster_da_loja(db, usuario, loja_id_int):
         return contexto
 
     if obreiro is not None:
         # VM (1) ou Secretário (5)
-        if _possui_cargos_na_loja(db, obreiro.id, loja_id, [CARGO_ID_VENERAVEL_MESTRE, 5]):
+        if _possui_cargos_na_loja(db, obreiro.id, loja_id_int, [CARGO_ID_VENERAVEL_MESTRE, 5]):
             return contexto
 
     raise HTTPException(
@@ -208,22 +196,23 @@ def exigir_secretaria_ou_vm_da_loja(
 
 
 def exigir_chancelaria_ou_vm_da_loja(
-    loja_id: int,
+    loja_id: str,
     contexto: tuple[UsuarioEsigma, Optional[Obreiro]] = Depends(get_usuario_e_obreiro),
     db: Session = Depends(get_db),
 ) -> tuple[UsuarioEsigma, Optional[Obreiro]]:
     """Permite acesso a ações da Chancelaria (Venerável Mestre, Chanceler [cargo_id=7], Secretário [cargo_id=5], Webmaster ou SuperAdmin)."""
+    loja_id_int = resolver_loja_id_ou_404(db, loja_id)
     usuario, obreiro = contexto
 
     if usuario.is_super_admin:
         return contexto
 
-    if _e_webmaster_da_loja(db, usuario, loja_id):
+    if _e_webmaster_da_loja(db, usuario, loja_id_int):
         return contexto
 
     if obreiro is not None:
         # VM (1), Chanceler (7) ou Secretário (5)
-        if _possui_cargos_na_loja(db, obreiro.id, loja_id, [CARGO_ID_VENERAVEL_MESTRE, 5, 7]):
+        if _possui_cargos_na_loja(db, obreiro.id, loja_id_int, [CARGO_ID_VENERAVEL_MESTRE, 5, 7]):
             return contexto
 
     raise HTTPException(

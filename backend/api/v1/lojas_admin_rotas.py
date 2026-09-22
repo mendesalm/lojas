@@ -33,6 +33,8 @@ from services.loja_admin_service import (
 router = APIRouter(prefix="/lojas/{loja_id}", tags=["Administração da Loja"])
 
 
+from core.resolver_loja import resolver_loja_id_ou_404
+
 @router.get(
     "",
     response_model=LojaDadosResponse,
@@ -40,11 +42,12 @@ router = APIRouter(prefix="/lojas/{loja_id}", tags=["Administração da Loja"])
     description="Retorna as informações institucionais, endereço, dia e horário das sessões e filiação."
 )
 def obter_dados(
-    loja_id: int,
+    loja_id: str,
     db: Session = Depends(get_db),
     _autorizacao=Depends(exigir_membro_ou_diretoria_da_loja)
 ):
-    return obter_loja_por_id(db, loja_id=loja_id)
+    loja_id_int = resolver_loja_id_ou_404(db, loja_id)
+    return obter_loja_por_id(db, loja_id=loja_id_int)
 
 
 @router.put(
@@ -54,12 +57,13 @@ def obter_dados(
     description="Permite ao Venerável Mestre ou Webmaster atualizar endereços e horários de reuniões."
 )
 def atualizar_dados(
-    loja_id: int,
+    loja_id: str,
     payload: LojaDadosUpdate,
     db: Session = Depends(get_db),
     _autorizacao=Depends(exigir_vm_ou_webmaster_da_loja)
 ):
-    return atualizar_dados_loja(db, loja_id=loja_id, payload=payload)
+    loja_id_int = resolver_loja_id_ou_404(db, loja_id)
+    return atualizar_dados_loja(db, loja_id=loja_id_int, payload=payload)
 
 
 @router.get(
@@ -69,11 +73,12 @@ def atualizar_dados(
     description="Retorna as comissões permanentes e temporárias com seus respectivos presidentes e membros."
 )
 def listar_comissoes(
-    loja_id: int,
+    loja_id: str,
     db: Session = Depends(get_db),
     _autorizacao=Depends(exigir_membro_ou_diretoria_da_loja)
 ):
-    return listar_comissoes_loja(db, loja_id=loja_id)
+    loja_id_int = resolver_loja_id_ou_404(db, loja_id)
+    return listar_comissoes_loja(db, loja_id=loja_id_int)
 
 
 @router.post(
@@ -84,12 +89,13 @@ def listar_comissoes(
     description="Cria uma comissão na Loja e designa os irmãos que a compõem."
 )
 def cadastrar_comissao(
-    loja_id: int,
+    loja_id: str,
     payload: ComissaoCreate,
     db: Session = Depends(get_db),
     _autorizacao=Depends(exigir_secretaria_ou_vm_da_loja)
 ):
-    payload.loja_id = loja_id
+    loja_id_int = resolver_loja_id_ou_404(db, loja_id)
+    payload.loja_id = loja_id_int
     return criar_comissao(db, payload)
 
 
@@ -100,12 +106,13 @@ def cadastrar_comissao(
     description="Retorna comunicados e notícias oficiais publicadas pela Secretaria para o quadro."
 )
 def obter_avisos(
-    loja_id: int,
+    loja_id: str,
     apenas_ativos: bool = Query(True, description="Filtrar apenas avisos não expirados"),
     db: Session = Depends(get_db),
     _autorizacao=Depends(exigir_membro_ou_diretoria_da_loja)
 ):
-    return listar_avisos_loja(db, loja_id=loja_id, apenas_ativos=apenas_ativos)
+    loja_id_int = resolver_loja_id_ou_404(db, loja_id)
+    return listar_avisos_loja(db, loja_id=loja_id_int, apenas_ativos=apenas_ativos)
 
 
 @router.post(
@@ -116,10 +123,11 @@ def obter_avisos(
     description="Permite à Secretaria ou Venerável Mestre publicar um novo comunicado no mural."
 )
 def publicar_aviso(
-    loja_id: int,
+    loja_id: str,
     payload: AvisoCreate,
     db: Session = Depends(get_db),
     _autorizacao=Depends(exigir_secretaria_ou_vm_da_loja)
 ):
-    payload.loja_id = loja_id
+    loja_id_int = resolver_loja_id_ou_404(db, loja_id)
+    payload.loja_id = loja_id_int
     return criar_aviso_loja(db, payload)

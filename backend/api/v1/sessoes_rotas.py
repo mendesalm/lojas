@@ -41,6 +41,8 @@ from services.sessoes_service import (
 router = APIRouter(tags=["Sessões e Frequência"])
 
 
+from core.resolver_loja import resolver_loja_id_ou_404
+
 @router.get(
     "/lojas/{loja_id}/sessoes",
     response_model=List[SessaoResumo],
@@ -48,13 +50,14 @@ router = APIRouter(tags=["Sessões e Frequência"])
     description="Retorna a relação de sessões maçônicas agendadas e realizadas pela oficina."
 )
 def listar_sessoes(
-    loja_id: int,
+    loja_id: str,
     status: Optional[str] = Query(None, description="Filtro de status (AGENDADA, EM_ANDAMENTO, REALIZADA, ENCERRADA)"),
     ano: Optional[int] = Query(None, description="Filtrar por ano"),
     db: Session = Depends(get_db),
     _autorizacao=Depends(exigir_membro_ou_diretoria_da_loja)
 ):
-    return listar_sessoes_loja(db, loja_id=loja_id, status_filtro=status, ano=ano)
+    loja_id_int = resolver_loja_id_ou_404(db, loja_id)
+    return listar_sessoes_loja(db, loja_id=loja_id_int, status_filtro=status, ano=ano)
 
 
 @router.get(
@@ -64,11 +67,12 @@ def listar_sessoes(
     description="Identifica se há uma sessão em andamento ou agendada para a data de hoje para check-in imediato."
 )
 def buscar_sessao_ativa(
-    loja_id: int,
+    loja_id: str,
     db: Session = Depends(get_db),
     _autorizacao=Depends(exigir_membro_ou_diretoria_da_loja)
 ):
-    return obter_sessao_ativa(db, loja_id=loja_id)
+    loja_id_int = resolver_loja_id_ou_404(db, loja_id)
+    return obter_sessao_ativa(db, loja_id=loja_id_int)
 
 
 @router.get(
@@ -78,11 +82,12 @@ def buscar_sessao_ativa(
     description="Retorna pauta, oficiais do dia e a relação completa de obreiros e visitantes com presença registrada."
 )
 def detalhes_sessao(
-    loja_id: int,
+    loja_id: str,
     sessao_id: int,
     db: Session = Depends(get_db),
     _autorizacao=Depends(exigir_membro_ou_diretoria_da_loja)
 ):
+    loja_id_int = resolver_loja_id_ou_404(db, loja_id)
     return obter_sessao_detalhe(db, sessao_id=sessao_id)
 
 
@@ -94,12 +99,13 @@ def detalhes_sessao(
     description="Permite à Secretaria, Chancelaria ou Venerável Mestre agendar uma nova sessão maçônica."
 )
 def agendar_sessao(
-    loja_id: int,
+    loja_id: str,
     payload: SessaoCreate,
     db: Session = Depends(get_db),
     _autorizacao=Depends(exigir_chancelaria_ou_vm_da_loja)
 ):
-    payload.loja_id = loja_id
+    loja_id_int = resolver_loja_id_ou_404(db, loja_id)
+    payload.loja_id = loja_id_int
     return criar_sessao(db, payload)
 
 
@@ -110,12 +116,13 @@ def agendar_sessao(
     description="Atualiza status (iniciar/encerrar), pauta ou horários da sessão."
 )
 def atualizar_dados_sessao(
-    loja_id: int,
+    loja_id: str,
     sessao_id: int,
     payload: SessaoUpdate,
     db: Session = Depends(get_db),
     _autorizacao=Depends(exigir_chancelaria_ou_vm_da_loja)
 ):
+    loja_id_int = resolver_loja_id_ou_404(db, loja_id)
     return atualizar_sessao(db, sessao_id=sessao_id, payload=payload)
 
 
@@ -126,13 +133,14 @@ def atualizar_dados_sessao(
     description="Registra a presença do obreiro autenticado na sessão por leitura de QR Code ou validação de geofence."
 )
 def check_in_obreiro(
-    loja_id: int,
+    loja_id: str,
     sessao_id: int,
     payload: PresencaCheckInPayload,
     contexto: tuple[UsuarioEsigma, Optional[Obreiro]] = Depends(get_usuario_e_obreiro),
     db: Session = Depends(get_db),
     _autorizacao=Depends(exigir_membro_ou_diretoria_da_loja)
 ):
+    loja_id_int = resolver_loja_id_ou_404(db, loja_id)
     usuario, obreiro = contexto
     alvo_id = payload.obreiro_id or (obreiro.id if obreiro else None)
     if not alvo_id:
@@ -155,12 +163,13 @@ def check_in_obreiro(
     description="Permite ao Chanceler registrar a presença ou falta justificada de um irmão ou visitante no livro de chamada."
 )
 def presenca_manual(
-    loja_id: int,
+    loja_id: str,
     sessao_id: int,
     payload: PresencaManualPayload,
     db: Session = Depends(get_db),
     _autorizacao=Depends(exigir_chancelaria_ou_vm_da_loja)
 ):
+    loja_id_int = resolver_loja_id_ou_404(db, loja_id)
     return registrar_presenca_sessao(
         db,
         sessao_id=sessao_id,
@@ -178,11 +187,12 @@ def presenca_manual(
     description="Retorna os irmãos visitantes de outras oficinas registrados no histórico da loja."
 )
 def obter_visitantes(
-    loja_id: int,
+    loja_id: str,
     busca: Optional[str] = Query(None, description="Busca por Nome ou CIM"),
     db: Session = Depends(get_db),
     _autorizacao=Depends(exigir_chancelaria_ou_vm_da_loja)
 ):
+    loja_id_int = resolver_loja_id_ou_404(db, loja_id)
     return listar_visitantes(db, busca=busca)
 
 
@@ -194,11 +204,12 @@ def obter_visitantes(
     description="Registra um novo visitante no cadastro da oficina para futura chamada em livro de presenças."
 )
 def registrar_novo_visitante(
-    loja_id: int,
+    loja_id: str,
     payload: VisitanteCreate,
     db: Session = Depends(get_db),
     _autorizacao=Depends(exigir_chancelaria_ou_vm_da_loja)
 ):
+    loja_id_int = resolver_loja_id_ou_404(db, loja_id)
     return cadastrar_visitante(db, payload)
 
 
