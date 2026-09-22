@@ -36,6 +36,12 @@ O módulo e aplicativo **Lojas** (`C:\Users\engan\Desktop\Lojas`) foi implantado
   - `src/modulos/administracao/PaginaDadosLoja.tsx`: Visualização institucional e edição dos dados do templo, dias e horários de reunião.
   - `src/modulos/obreiro/PaginaMeuCadastro.tsx`: Autoatendimento do obreiro com dados cadastrais e histórico de frequência.
   - `src/modulos/autenticacao/PaginaLogin.tsx`: Login desacoplado, com metodologia, arquitetura e layout rigorosamente idênticos aos do CoReVM (`HeroBackground` com partículas canvas, `LogoAnimadaLojas` com neon pulsante, card glassmorphism, inputs com floating labels, login com Google OAuth, e integração total com `POST /api/v1/auth/login` e `/auth/google` do e-Sigma).
+  - Rotas de Autenticação e Recuperação implementadas no Lojas (`src/modulos/autenticacao/`):
+    - `PaginaEsqueciSenha.tsx` (`/esqueci-senha`) integrado com `POST /auth/esqueci-senha` do e-Sigma.
+    - `PaginaSolicitarCadastro.tsx` (`/solicitar-cadastro`) integrado com `POST /solicitacoes-cadastro/` do e-Sigma.
+    - `PaginaTrocarSenhaObrigatoria.tsx` (`/trocar-senha-obrigatoria`) para primeiro acesso com senha provisória.
+    - `PaginaEntrarComLink.tsx` (`/entrar-com-link`) e `PaginaConfirmarMagicLink.tsx` (`/magic-link`) para login sem senha.
+    - `PaginaEntrarComPasskey.tsx` (`/entrar-com-passkey`) via `@simplewebauthn/browser`.
   - Correção GSI Google OAuth: Client ID configurado (`479802602404-mvkptldn6qbbg7qfjm0rdh1okekd12lp.apps.googleusercontent.com`) e largura do botão ajustada para `380` px para conformidade com a especificação do Google Identity Services (eliminando avisos `width is invalid: 100%` e erro 403 de Client ID inválido).
   - `src/Roteador.tsx`: Guarda de rotas `RotaProtegida` idêntica à do CoReVM, garantindo que o acesso a qualquer área interna exija autenticação genuína do e-Sigma, redirecionando automaticamente para `/login`.
 - **Validação de Build**:
