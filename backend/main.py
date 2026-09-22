@@ -10,21 +10,18 @@ from models import models
 # via e-Sigma + posse de cargo (mandato). Ver claude/decisao-transmissao-
 # cargo-vm.md no Project "Core" para o contexto completo da decisão.
 from api.v1.mandatos_rotas import router as mandatos_router
-
-# API de Hierarquia (2026-09-16) — segunda fatia: leitura interna
-# (backend-a-backend, protegida por chave de serviço) usada pelo e-Sigma
-# para validar a Solicitação de Cadastro contra a Loja/Potência reais.
-# Ver claude/decisao-controle-acesso-cadastro.md, seção 13, no Project
-# "Core".
 from api.v1.hierarquia_rotas import router as hierarquia_router
+from api.v1.obreiros_rotas import router as obreiros_router
+from api.v1.sessoes_rotas import router as sessoes_router
+from api.v1.lojas_admin_rotas import router as lojas_admin_router
 
 # Ensure tables are created (in a real app, use Alembic)
 # Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Lojas API (ERP Maçônico)",
-    description="Backend oficial do Módulo Lojas (Secretaria, Chancelaria, Patrimônio)",
-    version="1.0.0"
+    description="Backend oficial do Módulo Lojas (Secretaria, Chancelaria, Administração)",
+    version="1.1.0"
 )
 
 app.add_middleware(
@@ -37,6 +34,9 @@ app.add_middleware(
 
 app.include_router(mandatos_router, prefix="/api/v1")
 app.include_router(hierarquia_router, prefix="/api/v1")
+app.include_router(obreiros_router, prefix="/api/v1")
+app.include_router(sessoes_router, prefix="/api/v1")
+app.include_router(lojas_admin_router, prefix="/api/v1")
 
 @app.get("/")
 def read_root():

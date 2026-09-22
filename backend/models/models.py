@@ -324,6 +324,22 @@ class Obreiro(BaseModel):
         SQLAlchemyEnum(StatusRegistroEnum, name="status_registro_enum", values_callable=lambda x: [e.value for e in x]), nullable=False, default=StatusRegistroEnum.PENDENTE
     )
     ultimo_login = Column(DateTime(timezone=True), nullable=True)
+
+    # Campos compatíveis com o schema do GOB (METAGOB / me)
+    tipo_sanguineo = Column(String(5), nullable=True)
+    estado_civil = Column(String(50), nullable=True)
+    orgao_emissor_rg = Column(String(50), nullable=True)
+    data_emissao_rg = Column(Date, nullable=True)
+    nome_pai = Column(String(255), nullable=True)
+    nome_mae = Column(String(255), nullable=True)
+    titulo_eleitor = Column(String(50), nullable=True)
+    zona_eleitoral = Column(String(20), nullable=True)
+    secao_eleitoral = Column(String(20), nullable=True)
+    naturalidade_uf = Column(String(2), nullable=True)
+    loja_iniciacao = Column(String(255), nullable=True)
+    loja_elevacao = Column(String(255), nullable=True)
+    loja_exaltacao = Column(String(255), nullable=True)
+    regularidade_financeira = Column(Boolean, default=True, nullable=True)
     
     # Relationships
     associacoes_loja = relationship("ObreiroLojaAssociacao", back_populates="obreiro", cascade="all, delete-orphan")

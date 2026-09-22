@@ -10,3 +10,5 @@ python-multipart
 alembic
 pytz
 requests
+httpx
+pytest

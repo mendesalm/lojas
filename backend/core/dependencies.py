@@ -130,3 +130,104 @@ def exigir_vm_ou_webmaster_da_loja(
         status_code=403,
         detail="Apenas o Venerável Mestre em exercício desta Loja, um Webmaster desta Loja ou um SuperAdmin podem realizar esta ação.",
     )
+
+
+def _possui_cargos_na_loja(db: Session, obreiro_id: int, loja_id: int, cargo_ids: list[int]) -> bool:
+    """Verifica se o obreiro possui algum dos cargos ativos especificados na loja."""
+    hoje = date.today()
+    mandato = (
+        db.query(Mandato)
+        .filter(
+            Mandato.obreiro_id == obreiro_id,
+            Mandato.loja_id == loja_id,
+            Mandato.cargo_id.in_(cargo_ids),
+            Mandato.data_inicio <= hoje,
+        )
+        .filter((Mandato.data_fim.is_(None)) | (Mandato.data_fim >= hoje))
+        .first()
+    )
+    return mandato is not None
+
+
+def exigir_membro_ou_diretoria_da_loja(
+    loja_id: int,
+    contexto: tuple[UsuarioEsigma, Optional[Obreiro]] = Depends(get_usuario_e_obreiro),
+    db: Session = Depends(get_db),
+) -> tuple[UsuarioEsigma, Optional[Obreiro]]:
+    """Garante que o usuário pertence à Loja (como obreiro ativo), é Webmaster, ou SuperAdmin."""
+    usuario, obreiro = contexto
+
+    if usuario.is_super_admin:
+        return contexto
+
+    if _e_webmaster_da_loja(db, usuario, loja_id):
+        return contexto
+
+    if obreiro is not None:
+        assoc = (
+            db.query(Obreiro)
+            .join(Obreiro.associacoes_loja)
+            .filter(
+                Obreiro.id == obreiro.id,
+                Obreiro.associacoes_loja.any(loja_id=loja_id, status=StatusObreiroEnum.ATIVO)
+            )
+            .first()
+        )
+        if assoc:
+            return contexto
+
+    raise HTTPException(
+        status_code=403,
+        detail="Acesso restrito aos membros ativos e administração desta Loja.",
+    )
+
+
+def exigir_secretaria_ou_vm_da_loja(
+    loja_id: int,
+    contexto: tuple[UsuarioEsigma, Optional[Obreiro]] = Depends(get_usuario_e_obreiro),
+    db: Session = Depends(get_db),
+) -> tuple[UsuarioEsigma, Optional[Obreiro]]:
+    """Permite acesso a ações da Secretaria (Venerável Mestre, Secretário [cargo_id=5], Webmaster ou SuperAdmin)."""
+    usuario, obreiro = contexto
+
+    if usuario.is_super_admin:
+        return contexto
+
+    if _e_webmaster_da_loja(db, usuario, loja_id):
+        return contexto
+
+    if obreiro is not None:
+        # VM (1) ou Secretário (5)
+        if _possui_cargos_na_loja(db, obreiro.id, loja_id, [CARGO_ID_VENERAVEL_MESTRE, 5]):
+            return contexto
+
+    raise HTTPException(
+        status_code=403,
+        detail="Apenas o Venerável Mestre, o Secretário, o Webmaster ou SuperAdmin podem realizar esta ação.",
+    )
+
+
+def exigir_chancelaria_ou_vm_da_loja(
+    loja_id: int,
+    contexto: tuple[UsuarioEsigma, Optional[Obreiro]] = Depends(get_usuario_e_obreiro),
+    db: Session = Depends(get_db),
+) -> tuple[UsuarioEsigma, Optional[Obreiro]]:
+    """Permite acesso a ações da Chancelaria (Venerável Mestre, Chanceler [cargo_id=7], Secretário [cargo_id=5], Webmaster ou SuperAdmin)."""
+    usuario, obreiro = contexto
+
+    if usuario.is_super_admin:
+        return contexto
+
+    if _e_webmaster_da_loja(db, usuario, loja_id):
+        return contexto
+
+    if obreiro is not None:
+        # VM (1), Chanceler (7) ou Secretário (5)
+        if _possui_cargos_na_loja(db, obreiro.id, loja_id, [CARGO_ID_VENERAVEL_MESTRE, 5, 7]):
+            return contexto
+
+    raise HTTPException(
+        status_code=403,
+        detail="Apenas o Chanceler, Secretário, Venerável Mestre ou Webmaster podem gerenciar presenças.",
+    )
+
