@@ -10,6 +10,12 @@ import { PaginaComissoes } from '@/modulos/administracao/PaginaComissoes';
 import { PaginaDadosLoja } from '@/modulos/administracao/PaginaDadosLoja';
 import { PaginaMeuCadastro } from '@/modulos/obreiro/PaginaMeuCadastro';
 import { PaginaLogin } from '@/modulos/autenticacao/PaginaLogin';
+import { PaginaEsqueciSenha } from '@/modulos/autenticacao/PaginaEsqueciSenha';
+import { PaginaSolicitarCadastro } from '@/modulos/autenticacao/PaginaSolicitarCadastro';
+import { PaginaTrocarSenhaObrigatoria } from '@/modulos/autenticacao/PaginaTrocarSenhaObrigatoria';
+import { PaginaEntrarComLink } from '@/modulos/autenticacao/PaginaEntrarComLink';
+import { PaginaConfirmarMagicLink } from '@/modulos/autenticacao/PaginaConfirmarMagicLink';
+import { PaginaEntrarComPasskey } from '@/modulos/autenticacao/PaginaEntrarComPasskey';
 import { useAuth } from '@/compartilhado/contextos/AuthContext';
 
 /**
@@ -38,8 +44,23 @@ function RotaProtegida({ children }: { children: React.ReactNode }) {
 export const Roteador: React.FC = () => {
   return (
     <Routes>
-      {/* Rota Pública de Autenticação */}
+      {/* Rotas Públicas de Autenticação */}
       <Route path="/login" element={<PaginaLogin />} />
+      <Route path="/esqueci-senha" element={<PaginaEsqueciSenha />} />
+      <Route path="/solicitar-cadastro" element={<PaginaSolicitarCadastro />} />
+      <Route path="/entrar-com-link" element={<PaginaEntrarComLink />} />
+      <Route path="/magic-link" element={<PaginaConfirmarMagicLink />} />
+      <Route path="/entrar-com-passkey" element={<PaginaEntrarComPasskey />} />
+
+      {/* Troca obrigatória de senha (exige token de primeiro acesso) */}
+      <Route
+        path="/trocar-senha-obrigatoria"
+        element={
+          <RotaProtegida>
+            <PaginaTrocarSenhaObrigatoria />
+          </RotaProtegida>
+        }
+      />
 
       {/* Rota Raiz redireciona para /inicio (protegido) */}
       <Route path="/" element={<Navigate to="/inicio" replace />} />
