@@ -25,11 +25,13 @@ Atua de forma desacoplada e harmonizada com o **e-Sigma** (Provedor Central de I
 - **Frontend:** React 19, TypeScript, Vite, Material UI v9 (MUI), React Router 7, Notistack.
 - **Banco de Dados:** PostgreSQL compartilhado com CoReVM (`lojas_db`), sem migrações destrutivas.
 
-### Portas de Execução:
-- **Lojas Backend:** Porta `8001` (Dev) / `8003` (Prod)
-- **Lojas Frontend:** Porta `5175`
-- **e-Sigma (IdP Satélite):** Porta `8000` (Dev) / `8001` (Prod)
-- **CoReVM:** Porta `8003` (Dev) / `8002` (Prod)
+### Portas de Execução e Isolamento (Sem Conflitos):
+- **Frontend Lojas:** Porta `5175` (fixada via `strictPort: true` no Vite — impede invasão nas portas 5173/5174)
+- **Frontend CoReVM:** Porta `5174` (fixada via `strictPort: true`)
+- **Frontend e-Sigma:** Porta `5173` (fixada via `strictPort: true`)
+- **Backend Lojas:** Porta `8001` (Dev) / `8003` (Prod)
+- **Backend e-Sigma:** Porta `8000` (Dev) / `8001` (Prod)
+- **Backend CoReVM:** Porta `8003` (Dev) / `8002` (Prod)
 
 ---
 

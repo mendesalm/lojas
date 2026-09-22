@@ -46,7 +46,11 @@ O módulo e aplicativo **Lojas** (`C:\Users\engan\Desktop\Lojas`) foi implantado
 
 ---
 
-## 3. Garantias de Não-Regressão e Fronteiras
+## 3. Garantias de Não-Regressão, Portas e Fronteiras
+- **Portas Frontends Sem Conflito**:
+  - `5173`: e-Sigma Frontend (`strictPort: true`)
+  - `5174`: CoReVM Frontend (`strictPort: true`)
+  - `5175`: Lojas Frontend (`strictPort: true` no `vite.config.ts` e flag `--strictPort` no `package.json`). Caso a porta esteja ocupada, o Vite aborta de forma ruidosa em vez de auto-incrementar e sequestrar a porta dos outros módulos.
 - **CoReVM**: A rota `GET /api/v1/hierarquia/lojas/buscar` (autenticada via `x-service-key`) foi testada e preservada sem qualquer quebra de contrato.
 - **e-Sigma**: A validação de identidade depende exclusivamente de repasse do token JWT (`GET /api/v1/auth/validate`). O Lojas não armazena segredos de outros módulos nem acessa tabelas fora de `lojas_db`.
 - **Banco de Dados**: Nenhum dado pré-existente foi apagado ou renomeado. A migração foi executada estritamente com `ADD COLUMN IF NOT EXISTS`.
