@@ -1,7 +1,8 @@
-# Handoff — Módulo Lojas (Atualização 22 de Setembro de 2026)
+# Handoff — Módulo Lojas (Atualização 24 de Setembro de 2026)
 
-**Data da Sessão:** 22 de Setembro de 2026  
-**Status Global:** 🟢 Todos os Serviços Operacionais, Hidratação Cadastral Concluída, Autenticação Unificada e Nova Diretriz Arquitetural Registrada.
+**Data da Sessão:** 24 de Setembro de 2026  
+**Status Global:** 🟢 Serviços Operacionais, SSO Multi-Domínio Concluído, Endpoints de Integração API-First com CoReVM Ativos e Testados.
+
 
 ---
 
@@ -65,9 +66,23 @@ Em vez de descentralizar as funcionalidades operacionais da Loja em bancos de da
   - **Foco Estrito no Frontend:** A definição de "clone" restringe-se estritamente à **apresentação visual e design de UI/UX** — layout de tela, cartões de resumo, grids, gráficos, tabelas de dados, widgets de aniversariantes, painel de sessões e navegação do dashboard legado.
   - **Backend e Arquitetura Intactos:** A engenharia de backend segue a arquitetura moderna do ecossistema (`FastAPI`, banco centralizado `lojas_db`, autenticação segura via `e-Sigma` IdP, `Pydantic v2`). O objetivo é unir o melhor dos dois mundos: a solidez da arquitetura moderna com a interface visual consagrada e familiar aos usuários.
 
+### 1.4 Entregas da Sessão de 24 de Setembro de 2026
+- **SSO Multi-Domínio**:
+  - `AuthContext.tsx` atualizado para recuperação automática de sessão via `GET /api/v1/auth/sso/session` (`withCredentials: true`), com suporte a cookie HttpOnly `sigma_sso_token`.
+  - Função de logout integrada com revogação central no IdP via `POST /api/v1/auth/logout`.
+- **Endpoints de Integração API-First para o CoReVM**:
+  - `POST /api/v1/mandatos/veneraveis-elegiveis`: retorna VMs em exercício de um lote de lojas jurisdicionadas.
+  - `GET /api/v1/lojas/{loja_id}/oficiais-elegiveis`: lista ocupantes ativos dos cargos 2 a 7 e Mestres Instalados para suprir o seletor de Suplente e Operador Administrativo.
+  - `GET /api/v1/lojas/{loja_id}/oficiais-elegiveis/validar/{identificador}`: validação em tempo real de elegibilidade para indicação de oficiais.
+  - `POST /api/v1/obreiros/busca/multiplos`: enriquecimento de obreiros em lote por IDs.
+  - `GET /api/v1/obreiros/busca-identificador/{identificador}`: consulta unificada por CIM, CPF ou ID com lista de mandatos ativos.
+- **Via Dupla de Avisos Regionais**:
+  - Endpoints em `admissoes_rotas.py` e `documentos_rotas.py` permitindo que avisos oficiais emitidos pelo Conselho Regional no CoReVM sejam replicados diretamente para o mural do ERP Lojas.
+
 ---
 
 ## 3. O que deve ser continuado na próxima sessão
+
 
 1. **Migração do Schema de Dados para `lojas_db`:**
    - Mapear as tabelas existentes no Sigma Legado para Finanças (`finance_*`), Biblioteca (`library_*`), Classificados (`classifieds_*`) e Patrimônio.

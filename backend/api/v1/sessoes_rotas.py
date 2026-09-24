@@ -28,6 +28,7 @@ from schemas.sessao_schema import (
 )
 from services.sessoes_service import (
     listar_sessoes_loja,
+    listar_sessoes_regionais,
     obter_sessao_ativa,
     obter_sessao_detalhe,
     criar_sessao,
@@ -37,11 +38,30 @@ from services.sessoes_service import (
     cadastrar_visitante,
     obter_minhas_presencas
 )
+from datetime import date
 
 router = APIRouter(tags=["Sessões e Frequência"])
 
 
 from core.resolver_loja import resolver_loja_id_ou_404
+
+
+@router.get(
+    "/sessoes/regionais",
+    response_model=List[SessaoResumo],
+    summary="Listar Eventos e Sessões Regionais",
+    description="Retorna sessões com visibilidade REGIONAL para integração com a Agenda do Conselho Regional (CoReVM).",
+)
+def obter_sessoes_regionais(
+    lojas_ids: Optional[str] = Query(None, description="Lista de IDs de lojas separadas por vírgula"),
+    a_partir_de: Optional[date] = Query(None, description="Filtrar eventos a partir desta data"),
+    db: Session = Depends(get_db),
+):
+    ids_list = None
+    if lojas_ids:
+        ids_list = [int(i.strip()) for i in lojas_ids.split(",") if i.strip().isdigit()]
+    return listar_sessoes_regionais(db, lojas_ids=ids_list, a_partir_de=a_partir_de)
+
 
 @router.get(
     "/lojas/{loja_id}/sessoes",

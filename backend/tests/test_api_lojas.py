@@ -65,12 +65,15 @@ def override_usuario_vm():
     return usuario, obreiro
 
 
+from core.auth_esigma import obter_usuario_esigma
+
 def override_chave_servico():
     return True
 
 
 app.dependency_overrides[get_db] = override_get_db
 app.dependency_overrides[get_usuario_e_obreiro] = override_usuario_vm
+app.dependency_overrides[obter_usuario_esigma] = lambda: override_usuario_vm()[0]
 app.dependency_overrides[exigir_chave_de_servico] = override_chave_servico
 
 client = TestClient(app)
@@ -269,5 +272,142 @@ def test_obter_dados_cadastrais_loja():
     assert dados["numero_loja"] == "2181"
     assert dados["potencia_nome"] == "Grande Oriente do Brasil"
     assert "Grande Oriente do Brasil" in dados.get("filiacao_formatada", "")
+
+
+def test_busca_lojas_global_e_multiplas():
+    """Testa busca global por termo e em lote por IDs."""
+    res_busca = client.get("/api/v1/lojas/busca?q=Junqueira")
+    assert res_busca.status_code == 200
+    lojas = res_busca.json()
+    assert len(lojas) >= 1
+    assert lojas[0]["numero"] == "2181"
+
+    res_lote = client.post("/api/v1/lojas/busca/multiplas", json={"ids": [2181]})
+    assert res_lote.status_code == 200
+    lojas_lote = res_lote.json()
+    assert len(lojas_lote) == 1
+    assert lojas_lote[0]["id"] == 2181
+
+
+def test_atualizar_dados_cadastrais_loja_api():
+    """Testa a atualização via PUT/PATCH da loja."""
+    payload = {
+        "logradouro": "Rua das Acacias",
+        "numero": "42",
+        "bairro": "Centro",
+        "cidade": "Goiania",
+        "estado": "GO",
+        "cep": "74000-000",
+        "dia_sessao": "Segunda-feira",
+        "periodicidade": "Semanal"
+    }
+    res = client.put("/api/v1/lojas/2181", json=payload)
+    assert res.status_code == 200
+    dados = res.json()
+    assert dados["logradouro"] == "Rua das Acacias"
+    assert dados["cidade"] == "Goiania"
+
+
+def test_documentos_loja_e_regionais_api():
+    """Testa cadastro, listagem e busca regional de documentos."""
+    doc_payload = {
+        "titulo": "Balaústre da Sessão de Finanças",
+        "tipo_documento": "BALAUSTRE",
+        "caminho_arquivo": "/uploads/loja_2181/doc1.pdf",
+        "nome_arquivo": "doc1.pdf",
+        "tipo_arquivo": "pdf",
+        "visibilidade": "REGIONAL",
+        "descricao": "Ata aprovada sem emendas",
+        "loja_id": 2181
+    }
+    res_cria = client.post("/api/v1/lojas/2181/documentos", json=doc_payload)
+    assert res_cria.status_code == 201
+    doc = res_cria.json()
+    assert doc["titulo"] == "Balaústre da Sessão de Finanças"
+    assert doc["visibilidade"] == "REGIONAL"
+
+    res_list = client.get("/api/v1/lojas/2181/documentos")
+    assert res_list.status_code == 200
+    assert len(res_list.json()) >= 1
+
+    res_reg = client.get("/api/v1/documentos/regionais?lojas_ids=2181")
+    assert res_reg.status_code == 200
+    assert len(res_reg.json()) >= 1
+
+
+def test_admissoes_loja_e_regionais_api():
+    """Testa cadastro e listagem de prévias/editais de admissão."""
+    admissao_payload = {
+        "tipo": "INICIACAO",
+        "candidato_nome": "Candidato Teste da Silva",
+        "pdf_url": "http://arquivos.sigma/previa123.pdf",
+        "visibilidade": "REGIONAL",
+        "loja_id": 2181
+    }
+    res_cria = client.post("/api/v1/lojas/2181/admissoes", json=admissao_payload)
+    assert res_cria.status_code == 201
+    adm = res_cria.json()
+    assert adm["candidato_nome"] == "Candidato Teste da Silva"
+    assert adm["status"] == "EM_ANDAMENTO"
+
+    res_reg = client.get("/api/v1/admissoes/regionais?lojas_ids=2181")
+    assert res_reg.status_code == 200
+    assert len(res_reg.json()) >= 1
+
+
+def test_sessao_visibilidade_regional_api():
+    """Testa criação de sessão com visibilidade regional e consulta regional."""
+    sessao_payload = {
+        "titulo": "Sessão Magna Regional Conjunta",
+        "data_sessao": date.today().isoformat(),
+        "tipo": "Magna",
+        "subtipo": "Festiva",
+        "visibilidade": "REGIONAL",
+        "loja_id": 2181
+    }
+    res_cria = client.post("/api/v1/lojas/2181/sessoes", json=sessao_payload)
+    assert res_cria.status_code == 201
+    sessao = res_cria.json()
+    assert sessao["visibilidade"] == "REGIONAL"
+
+    res_reg = client.get("/api/v1/sessoes/regionais?lojas_ids=2181")
+    assert res_reg.status_code == 200
+    assert any(s["titulo"] == "Sessão Magna Regional Conjunta" for s in res_reg.json())
+
+
+def test_avisos_conselho_regional_via_dupla_api():
+    """Testa a publicação de aviso pelo Conselho Regional e a exibição automática no painel do Lojas."""
+    headers_servico = {"X-Service-Key": "lBo_w3qPZ9GDL0O5jq8PgOpjKc8M2J1YdV7QfOj_Zfw"}
+    
+    # 1. Publica aviso broadcast regional
+    aviso_payload = {
+        "titulo": "Convocação Ordinária da 1ª Região Maçônica",
+        "conteudo": "Convocamos todos os Veneráveis Mestres para a Assembleia Geral Regional.",
+        "nivel_prioridade": "URGENTE",
+        "autor_nome": "Mesa Diretora do Conselho Regional",
+        "loja_id": None  # Broadcast para todas as lojas
+    }
+    res_pub = client.post("/api/v1/avisos/regional", json=aviso_payload, headers=headers_servico)
+    assert res_pub.status_code == 201
+    dados_pub = res_pub.json()
+    assert dados_pub["status"] == "success"
+    assert dados_pub["origem"] == "CONSELHO_REGIONAL"
+
+    # 2. Verifica se o aviso aparece na listagem de avisos da Loja 2181 com prefixo [Conselho Regional]
+    res_notices = client.get("/api/v1/lojas/2181/dashboard/notices")
+    assert res_notices.status_code == 200
+    notices = res_notices.json()
+    aviso_encontrado = next((n for n in notices if "Convocação Ordinária da 1ª Região" in n["title"]), None)
+    assert aviso_encontrado is not None
+    assert aviso_encontrado["title"].startswith("[Conselho Regional]")
+    assert aviso_encontrado["origem"] == "CONSELHO_REGIONAL"
+    assert aviso_encontrado["nivel_prioridade"] == "URGENTE"
+
+    # 3. Verifica se a rota do conselho lista os avisos
+    res_regionais = client.get("/api/v1/avisos/regionais", headers=headers_servico)
+    assert res_regionais.status_code == 200
+    assert any("Convocação Ordinária" in a["titulo"] for a in res_regionais.json())
+
+
 
 

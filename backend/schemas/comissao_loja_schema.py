@@ -44,6 +44,10 @@ class AvisoBase(BaseModel):
     titulo: str
     conteudo: str
     tipo: str = "Aviso"  # Aviso, Notícia
+    origem: Optional[str] = "LOJA"  # LOJA, CONSELHO_REGIONAL
+    nivel_prioridade: Optional[str] = "NORMAL"  # NORMAL, ALTO, URGENTE
+    autor_nome: Optional[str] = None
+    link_externo: Optional[str] = None
     data_expiracao: Optional[date] = None
     ativo: bool = True
 
@@ -58,6 +62,7 @@ class AvisoResponse(AvisoBase):
     criado_em: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
+
 
 
 class LojaDadosResponse(BaseModel):
@@ -95,13 +100,19 @@ class LojaDadosResponse(BaseModel):
 
 
 class LojaDadosUpdate(BaseModel):
+    nome_loja: Optional[str] = None
+    nome: Optional[str] = None
+    numero_loja: Optional[str] = None
+    numero: Optional[str] = None
+    numero_endereco: Optional[str] = None
     titulo_loja: Optional[str] = None
+    rito: Optional[str] = None
     cnpj: Optional[str] = None
     email: Optional[str] = None
     telefone: Optional[str] = None
     site: Optional[str] = None
     logradouro: Optional[str] = None
-    numero: Optional[str] = None
+    complemento: Optional[str] = None
     bairro: Optional[str] = None
     cidade: Optional[str] = None
     estado: Optional[str] = None
@@ -112,3 +123,32 @@ class LojaDadosUpdate(BaseModel):
     dia_sessao: Optional[str] = None
     periodicidade: Optional[str] = None
     horario_sessao: Optional[time] = None
+
+
+class LojaBuscaItem(BaseModel):
+    id: int
+    nome: str
+    numero: Optional[str] = None
+    numero_loja: Optional[str] = None
+    cidade: Optional[str] = ""
+    potencia: Optional[str] = ""
+    rito: Optional[str] = ""
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LojaCreateOnTheFlyPayload(BaseModel):
+    nome_loja: str
+    numero_loja: str
+    titulo_loja: Optional[str] = "ARLS"
+    rito: str
+    potencia_id: int
+    obediencia_id: Optional[int] = None
+    cidade: str
+    estado: str
+    cep: Optional[str] = None
+
+
+class LojaMultiplasBuscaPayload(BaseModel):
+    ids: List[int]
+

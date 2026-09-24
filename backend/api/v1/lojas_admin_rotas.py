@@ -1,25 +1,30 @@
 # EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 """
 Rotas para Administração Institucional da Loja:
-Dados Cadastrais, Gestão de Comissões e Mural de Avisos da Secretaria.
+Dados Cadastrais, Buscas Globais, Gestão de Comissões e Mural de Avisos da Secretaria.
 """
 from typing import List, Optional
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from core.dependencies import (
     get_db,
     exigir_membro_ou_diretoria_da_loja,
     exigir_secretaria_ou_vm_da_loja,
-    exigir_vm_ou_webmaster_da_loja
+    exigir_vm_ou_webmaster_da_loja,
+    exigir_permissao_gestao_loja,
 )
+from core.resolver_loja import resolver_loja_id_ou_404
 from schemas.comissao_loja_schema import (
     LojaDadosResponse,
     LojaDadosUpdate,
     ComissaoCreate,
     ComissaoResponse,
     AvisoCreate,
-    AvisoResponse
+    AvisoResponse,
+    LojaBuscaItem,
+    LojaCreateOnTheFlyPayload,
+    LojaMultiplasBuscaPayload,
 )
 from services.loja_admin_service import (
     obter_loja_por_id,
@@ -27,14 +32,60 @@ from services.loja_admin_service import (
     listar_comissoes_loja,
     criar_comissao,
     listar_avisos_loja,
-    criar_aviso_loja
+    criar_aviso_loja,
+    buscar_lojas_termo,
+    buscar_lojas_por_ids,
+    cadastrar_loja_on_the_fly,
 )
 
+# Router para buscas e operações em coleção/global
+router_lojas_global = APIRouter(prefix="/lojas", tags=["Lojas (Global e Busca)"])
+
+# Router para alçada de uma oficina específica
 router = APIRouter(prefix="/lojas/{loja_id}", tags=["Administração da Loja"])
 
 
-from core.resolver_loja import resolver_loja_id_ou_404
+# --- ROTAS GLOBAIS DE LOJAS ---
+@router_lojas_global.get(
+    "/busca",
+    response_model=List[LojaBuscaItem],
+    summary="Busca Lojas por Termo",
+    description="Busca lojas pelo nome, número ou cidade com potência associada.",
+)
+def buscar_lojas(
+    q: str = Query(..., min_length=3, description="Termo de pesquisa (mínimo 3 caracteres)"),
+    db: Session = Depends(get_db),
+):
+    return buscar_lojas_termo(db, termo=q)
 
+
+@router_lojas_global.post(
+    "/busca/multiplas",
+    response_model=List[LojaBuscaItem],
+    summary="Busca Múltiplas Lojas por IDs",
+    description="Retorna detalhes de um lote de Lojas informado.",
+)
+def buscar_multiplas_lojas(
+    payload: LojaMultiplasBuscaPayload,
+    db: Session = Depends(get_db),
+):
+    return buscar_lojas_por_ids(db, ids=payload.ids)
+
+
+@router_lojas_global.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    summary="Cadastra Loja On-the-Fly",
+    description="Cria uma loja respeitando restrições de Potência e Obediência.",
+)
+def cadastrar_loja(
+    payload: LojaCreateOnTheFlyPayload,
+    db: Session = Depends(get_db),
+):
+    return cadastrar_loja_on_the_fly(db, payload=payload)
+
+
+# --- ROTAS ESPECÍFICAS DA LOJA ---
 @router.get(
     "",
     response_model=LojaDadosResponse,
@@ -54,13 +105,29 @@ def obter_dados(
     "",
     response_model=LojaDadosResponse,
     summary="Atualizar Dados da Loja",
-    description="Permite ao Venerável Mestre ou Webmaster atualizar endereços e horários de reuniões."
+    description="Permite à Mesa Diretora Regional, Venerável Mestre, Secretário, Tesoureiro ou Webmaster atualizar dados cadastrais e horários da Loja."
 )
-def atualizar_dados(
+def atualizar_dados_put(
     loja_id: str,
     payload: LojaDadosUpdate,
     db: Session = Depends(get_db),
-    _autorizacao=Depends(exigir_vm_ou_webmaster_da_loja)
+    _autorizacao=Depends(exigir_permissao_gestao_loja)
+):
+    loja_id_int = resolver_loja_id_ou_404(db, loja_id)
+    return atualizar_dados_loja(db, loja_id=loja_id_int, payload=payload)
+
+
+@router.patch(
+    "",
+    response_model=LojaDadosResponse,
+    summary="Atualização Parcial de Dados da Loja",
+    description="Permite atualização incremental dos campos cadastrais e horários da Loja."
+)
+def atualizar_dados_patch(
+    loja_id: str,
+    payload: LojaDadosUpdate,
+    db: Session = Depends(get_db),
+    _autorizacao=Depends(exigir_permissao_gestao_loja)
 ):
     loja_id_int = resolver_loja_id_ou_404(db, loja_id)
     return atualizar_dados_loja(db, loja_id=loja_id_int, payload=payload)
@@ -84,7 +151,7 @@ def listar_comissoes(
 @router.post(
     "/comissoes",
     response_model=ComissaoResponse,
-    status_code=201,
+    status_code=status.HTTP_201_CREATED,
     summary="Criar Comissão",
     description="Cria uma comissão na Loja e designa os irmãos que a compõem."
 )
@@ -118,7 +185,7 @@ def obter_avisos(
 @router.post(
     "/avisos",
     response_model=AvisoResponse,
-    status_code=201,
+    status_code=status.HTTP_201_CREATED,
     summary="Publicar Aviso",
     description="Permite à Secretaria ou Venerável Mestre publicar um novo comunicado no mural."
 )

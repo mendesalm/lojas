@@ -1,0 +1,71 @@
+# EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
+"""
+Dicionário de Constantes e Enumerações do Módulo Lojas (Golden Data Dictionary).
+Padroniza identificadores canônicos de cargos da Loja, papéis de governança,
+visibilidade de eventos e escopos de autorização entre o Lojas e módulos satélites (CoReVM).
+"""
+
+# --- IDENTIFICADORES CANÔNICOS DE CARGOS EM LOJAS_DB (Tabela 'cargos') ---
+CARGO_ID_VENERAVEL_MESTRE = 1
+CARGO_ID_PRIMEIRO_VIGILANTE = 2
+CARGO_ID_SEGUNDO_VIGILANTE = 3
+CARGO_ID_ORADOR = 4
+CARGO_ID_SECRETARIO = 5
+CARGO_ID_TESOUREIRO = 6
+CARGO_ID_CHANCELER = 7
+CARGO_ID_PRIMEIRO_EXPERTO = 8
+CARGO_ID_SEGUNDO_EXPERTO = 9
+CARGO_ID_PRIMEIRO_DIACONO = 10
+CARGO_ID_SEGUNDO_DIACONO = 11
+CARGO_ID_MESTRE_DE_CERIMONIAS = 12
+CARGO_ID_HOSPITALEIRO = 13
+CARGO_ID_MESTRE_DE_HARMONIA = 14
+CARGO_ID_MESTRE_DE_BANQUETES = 15
+CARGO_ID_ARQUITETO = 16
+CARGO_ID_BIBLIOTECARIO = 17
+CARGO_ID_PORTA_ESTANDARTE = 18
+CARGO_ID_PORTA_ESPADAS = 19
+CARGO_ID_GUARDA_DO_TEMPLO = 20
+CARGO_ID_COBRIDOR_EXTERNO = 21
+
+# --- AGRUPAMENTOS DE CARGOS POR ALÇADA DE GESTÃO ---
+# Cargos com poderes de administração institucional da Loja
+CARGOS_GESTAO_LOJA = [
+    CARGO_ID_VENERAVEL_MESTRE,
+    CARGO_ID_SECRETARIO,
+    CARGO_ID_TESOUREIRO,
+    CARGO_ID_CHANCELER,
+]
+
+# Alçada da Secretaria (comunicados, comissões, atas, correspondências)
+CARGOS_SECRETARIA = [
+    CARGO_ID_VENERAVEL_MESTRE,
+    CARGO_ID_SECRETARIO,
+]
+
+# Alçada da Chancelaria (livro de presenças, quadro de obreiros, visitantes)
+CARGOS_CHANCELARIA = [
+    CARGO_ID_VENERAVEL_MESTRE,
+    CARGO_ID_SECRETARIO,
+    CARGO_ID_CHANCELER,
+]
+
+# Alçada da Tesouraria (dados fiscais, contas, patrimônio)
+CARGOS_TESOURARIA = [
+    CARGO_ID_VENERAVEL_MESTRE,
+    CARGO_ID_TESOUREIRO,
+]
+
+# --- ESCOPO DE VISIBILIDADE DE EVENTOS / SESSÕES / AVISOS ---
+VISIBILIDADE_LOCAL = "LOCAL"
+VISIBILIDADE_REGIONAL = "REGIONAL"
+
+# --- PAPÉIS DA MESA DIRETORA REGIONAL (CoReVM) ---
+# Utilizados quando o CoReVM atua de forma inter-serviços com Service-Key
+PAPEIS_DIRETORIA_REGIONAL = [
+    "DIRETORIA",
+    "PRESIDENTE",
+    "VICE_PRESIDENTE",
+    "SECRETARIO",
+    "DIRETORIA_REGIONAL",
+]

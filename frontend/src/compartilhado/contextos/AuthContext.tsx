@@ -51,18 +51,52 @@ export const clienteHttp = axios.create({
   },
 });
 
-// Interceptor para injetar o token Bearer do e-Sigma
+/**
+ * Recupera o token de sessão ativo do ecossistema, priorizando o token local do Lojas,
+ * com fallback inteligente e validado para CoReVM e e-Sigma (SSO do ecossistema).
+ * Se o token encontrado estiver expirado, ele é descartado para evitar estados inconsistentes.
+ */
+export function obterTokenSessaoValido(): string | null {
+  const chaves = ['@lojas:token', '@corevm:token', '@esigma:token'];
+  for (const chave of chaves) {
+    const t = localStorage.getItem(chave);
+    if (t) {
+      if (isTokenValido(t)) {
+        return t;
+      } else {
+        localStorage.removeItem(chave);
+      }
+    }
+  }
+  return null;
+}
+
+// Interceptor para injetar o token Bearer ativo do ecossistema (SSO)
 clienteHttp.interceptors.request.use((config) => {
-  const token =
-    localStorage.getItem('@lojas:token') ||
-    localStorage.getItem('@corevm:token') ||
-    localStorage.getItem('@esigma:token');
+  const token = obterTokenSessaoValido();
 
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
+
+// Interceptor para deslogar e limpar sessão global se o backend retornar 401
+clienteHttp.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('@lojas:token');
+      localStorage.removeItem('@corevm:token');
+      localStorage.removeItem('@esigma:token');
+      localStorage.removeItem('@lojas:loja_ativa_id');
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 /**
  * Utilitário seguro para extrair mensagem legível de erros HTTP,
@@ -102,6 +136,28 @@ function decodificarPayloadJwt(token: string): any {
     return JSON.parse(payloadJson);
   } catch {
     return {};
+  }
+}
+
+/**
+ * Valida a estrutura básica e se o JWT já expirou (campo exp em segundos).
+ */
+function isTokenValido(token?: string | null): boolean {
+  if (!token) return false;
+  try {
+    const payload = decodificarPayloadJwt(token);
+    if (!payload || (!payload.sub && !payload.user_id)) {
+      return false;
+    }
+    if (payload.exp && typeof payload.exp === 'number') {
+      const agoraSegundos = Math.floor(Date.now() / 1000);
+      if (payload.exp <= agoraSegundos) {
+        return false;
+      }
+    }
+    return true;
+  } catch {
+    return false;
   }
 }
 
@@ -166,35 +222,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setModoTema(temaSalvo);
     }
 
-    const storedToken =
-      localStorage.getItem('@lojas:token') ||
-      localStorage.getItem('@corevm:token') ||
-      localStorage.getItem('@esigma:token');
+    const carregarSessao = async () => {
+      // 1. SSO local: busca token válido nas chaves locais (Lojas -> CoReVM -> e-Sigma)
+      let storedToken = obterTokenSessaoValido();
 
-    if (storedToken) {
-      try {
-        setToken(storedToken);
-        const payload = decodificarPayloadJwt(storedToken);
-        setUsuario({
-          id: payload.user_id || payload.sub || '',
-          nome: payload.nome || payload.sub || 'Irmão',
-          email: payload.email || '',
-          roles: payload.roles || (payload.role ? [payload.role] : ['obreiro']),
-          cim: payload.cim,
-          cpf: payload.cpf,
-          loja_id: payload.loja_id || 2181,
-          user_type: payload.user_type || (payload.role === 'super_admin' ? 'super_admin' : 'member'),
-          role: payload.role || (payload.roles && payload.roles[0]) || 'obreiro',
-          active_role_name: payload.active_role_name || payload.cargo || '',
-        });
-
-        // Carrega lojas associadas do obreiro
-        carregarLojasDisponiveis();
-      } catch (err) {
-        console.error('Erro ao decodificar token:', err);
+      // 2. SSO Multi-Domínio: se não tiver localmente, tenta restaurar via cookie de SSO do e-Sigma
+      if (!storedToken) {
+        try {
+          const esigmaApiUrl = import.meta.env.VITE_ESIGMA_API_URL || 'http://localhost:8000/api/v1';
+          const resp = await axios.get(`${esigmaApiUrl}/auth/sso/session`, { withCredentials: true });
+          if (resp.data?.access_token && isTokenValido(resp.data.access_token)) {
+            const tokenSso = String(resp.data.access_token);
+            storedToken = tokenSso;
+            localStorage.setItem('@lojas:token', tokenSso);
+          }
+        } catch {
+          // Sessão não ativa no e-Sigma
+        }
       }
-    }
-    setCarregando(false);
+
+      if (storedToken) {
+        try {
+          setToken(storedToken);
+          localStorage.setItem('@lojas:token', storedToken);
+
+          const payload = decodificarPayloadJwt(storedToken);
+          setUsuario({
+            id: payload.user_id || payload.sub || '',
+            nome: payload.nome || payload.sub || 'Irmão',
+            email: payload.email || '',
+            roles: payload.roles || (payload.role ? [payload.role] : ['obreiro']),
+            cim: payload.cim,
+            cpf: payload.cpf,
+            loja_id: payload.loja_id || 2181,
+            user_type: payload.user_type || (payload.role === 'super_admin' ? 'super_admin' : 'member'),
+            role: payload.role || (payload.roles && payload.roles[0]) || 'obreiro',
+            active_role_name: payload.active_role_name || payload.cargo || '',
+          });
+
+          // Carrega lojas associadas do obreiro
+          await carregarLojasDisponiveis(storedToken);
+        } catch (err) {
+          console.error('Erro ao decodificar token de sessão:', err);
+          localStorage.removeItem('@lojas:token');
+          setToken(null);
+          setUsuario(null);
+        }
+      }
+      setCarregando(false);
+    };
+
+    carregarSessao();
   }, []);
 
   const login = (newToken: string, usuarioData: Usuario) => {
@@ -207,12 +285,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     carregarLojasDisponiveis();
   };
 
-  const logout = () => {
+  const logout = async () => {
     setToken(null);
     setUsuario(null);
     setLojasDisponiveis([]);
+    // Limpeza completa do ecossistema local
     localStorage.removeItem('@lojas:token');
+    localStorage.removeItem('@corevm:token');
+    localStorage.removeItem('@esigma:token');
     localStorage.removeItem('@lojas:loja_ativa_id');
+
+    // Notifica o e-Sigma para revogar o cookie de SSO multi-domínio
+    try {
+      const esigmaApiUrl = import.meta.env.VITE_ESIGMA_API_URL || 'http://localhost:8000/api/v1';
+      await axios.post(`${esigmaApiUrl}/auth/logout`, {}, { withCredentials: true });
+    } catch {
+      // Ignora erro de rede durante o logout
+    }
   };
 
   return (

@@ -28,3 +28,11 @@ def exigir_chave_de_servico(x_service_key: str = Header(..., alias="X-Service-Ke
         )
     if not secrets.compare_digest(x_service_key, LOJAS_SERVICE_KEY):
         raise HTTPException(status_code=401, detail="Chave de serviço inválida.")
+
+
+def validar_chave_de_servico(x_service_key: Optional[str]) -> bool:
+    """Valida se a chave de serviço informada confere com LOJAS_SERVICE_KEY em tempo constante."""
+    if not LOJAS_SERVICE_KEY or not x_service_key:
+        return False
+    return secrets.compare_digest(x_service_key, LOJAS_SERVICE_KEY)
+

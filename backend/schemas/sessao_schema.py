@@ -44,6 +44,7 @@ class SessaoBase(BaseModel):
     tipo: Optional[str] = "Ordinária"
     subtipo: Optional[str] = "Regular"
     status: Optional[str] = "AGENDADA"
+    visibilidade: Optional[str] = "LOCAL"  # LOCAL, REGIONAL
     pauta: Optional[str] = None
     cargos_temporarios: Optional[Dict[str, Any]] = None
 
@@ -62,6 +63,7 @@ class SessaoUpdate(BaseModel):
     tipo: Optional[str] = None
     subtipo: Optional[str] = None
     status: Optional[str] = None
+    visibilidade: Optional[str] = None
     pauta: Optional[str] = None
     cargos_temporarios: Optional[Dict[str, Any]] = None
 
@@ -76,6 +78,8 @@ class SessaoResumo(BaseModel):
     tipo: Optional[str] = None
     subtipo: Optional[str] = None
     status: str
+    visibilidade: Optional[str] = "LOCAL"
+    loja_id: Optional[int] = None
     total_presentes: int = 0
     total_visitantes: int = 0
 

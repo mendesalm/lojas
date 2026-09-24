@@ -6,6 +6,7 @@ cadastro com anti-duplicidade e consulta de autoatendimento ("Meu Cadastro").
 """
 from typing import List, Optional
 from fastapi import APIRouter, Depends, Query, HTTPException
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from core.dependencies import (
@@ -212,3 +213,119 @@ def minhas_lojas(
         })
 
     return resultado
+
+
+@router.get(
+    "/obreiros/busca/{cim}",
+    summary="Buscar Obreiro por CIM (Inter-módulos)",
+    description="Retorna os dados cadastrais do Obreiro a partir do seu CIM.",
+)
+def buscar_obreiro_cim(cim: str, db: Session = Depends(get_db)):
+    from models.models import Obreiro as ObreiroModel
+    obreiro = db.query(ObreiroModel).filter(ObreiroModel.cim == cim).first()
+    if not obreiro:
+        raise HTTPException(status_code=404, detail="Obreiro não encontrado.")
+    return {
+        "id": obreiro.id,
+        "cim": obreiro.cim,
+        "nome_completo": obreiro.nome_completo,
+        "email": obreiro.email,
+        "cpf": obreiro.cpf,
+        "telefone": obreiro.telefone,
+    }
+
+
+class BuscaMultiplosObreirosRequest(BaseModel):
+    ids: List[int]
+
+
+@router.post(
+    "/obreiros/busca/multiplos",
+    summary="Buscar Múltiplos Obreiros por IDs (Inter-módulos)",
+    description="Retorna lista de obreiros com dados básicos para enriquecimento de telas inter-módulos.",
+)
+def buscar_obreiros_multiplos(payload: BuscaMultiplosObreirosRequest, db: Session = Depends(get_db)):
+    from models.models import Obreiro as ObreiroModel
+    if not payload.ids:
+        return []
+    obreiros = db.query(ObreiroModel).filter(ObreiroModel.id.in_(payload.ids)).all()
+    return [
+        {
+            "id": o.id,
+            "cim": o.cim,
+            "nome_completo": o.nome_completo,
+            "email": o.email,
+            "cpf": o.cpf,
+            "telefone": o.telefone,
+        }
+        for o in obreiros
+    ]
+
+
+@router.get(
+    "/obreiros/busca-id/{obreiro_id}",
+    summary="Buscar Obreiro por ID (Inter-módulos)",
+    description="Retorna os dados cadastrais do Obreiro a partir do seu ID numérico.",
+)
+def buscar_obreiro_por_id_simples(obreiro_id: int, db: Session = Depends(get_db)):
+    from models.models import Obreiro as ObreiroModel
+    obreiro = db.query(ObreiroModel).filter(ObreiroModel.id == obreiro_id).first()
+    if not obreiro:
+        raise HTTPException(status_code=404, detail="Obreiro não encontrado.")
+    return {
+        "id": obreiro.id,
+        "cim": obreiro.cim,
+        "nome_completo": obreiro.nome_completo,
+        "email": obreiro.email,
+        "cpf": obreiro.cpf,
+        "telefone": obreiro.telefone,
+    }
+
+
+@router.get(
+    "/obreiros/busca-identificador/{identificador}",
+    summary="Buscar Obreiro e Mandatos Ativos por CIM, CPF ou ID",
+    description="Retorna dados cadastrais e mandatos ativos do obreiro para integração inter-módulos.",
+)
+def buscar_obreiro_por_identificador(identificador: str, db: Session = Depends(get_db)):
+    from models.models import Obreiro as ObreiroModel, Mandato as MandatoModel
+    from datetime import date
+    from sqlalchemy import or_
+
+    query = db.query(ObreiroModel).filter(
+        or_(
+            ObreiroModel.cim == identificador,
+            ObreiroModel.cpf == identificador,
+            ObreiroModel.id == int(identificador) if identificador.isdigit() else False
+        )
+    )
+    obreiro = query.first()
+    if not obreiro:
+        raise HTTPException(status_code=404, detail="Obreiro não encontrado.")
+
+    hoje = date.today()
+    mandatos = db.query(MandatoModel).filter(
+        MandatoModel.obreiro_id == obreiro.id,
+        or_(MandatoModel.data_fim.is_(None), MandatoModel.data_fim >= hoje)
+    ).all()
+
+    return {
+        "id": obreiro.id,
+        "cim": obreiro.cim,
+        "nome_completo": obreiro.nome_completo,
+        "email": obreiro.email,
+        "cpf": obreiro.cpf,
+        "telefone": obreiro.telefone,
+        "mandatos_ativos": [
+            {
+                "id": m.id,
+                "cargo_id": m.cargo_id,
+                "loja_id": m.loja_id,
+                "data_inicio": m.data_inicio.isoformat() if m.data_inicio else None,
+            }
+            for m in mandatos
+        ]
+    }
+
+
+

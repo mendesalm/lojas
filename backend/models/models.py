@@ -1,5 +1,6 @@
 import enum
 import uuid
+from datetime import date, datetime
 
 from sqlalchemy import (
     Boolean,
@@ -589,7 +590,7 @@ class SessaoMaconica(BaseModel):
     gestao_id = Column(Integer, ForeignKey("gestoes.id"), nullable=True)
     gestao = relationship("Gestao", backref="sessions")
     
-    gestao = relationship("Gestao", backref="sessions")
+    visibilidade = Column(String(20), default="LOCAL", nullable=True)
     
     # Novos campos
     cargos_temporarios = Column(JSON, nullable=True) # Stores overriding cargos for this sessao { "Venerável Mestre": "Nome do Irmão", ... }
@@ -694,6 +695,11 @@ class Documento(BaseModel):
     caminho_arquivo = Column(String(512), nullable=False)  # Path to the stored file
     nome_arquivo = Column(String(255), nullable=False)
     tipo_arquivo = Column(String(50), nullable=True)
+    tamanho_bytes = Column(Integer, nullable=True)
+    descricao = Column(Text, nullable=True)
+    visibilidade = Column(String(20), default="LOCAL", nullable=True)  # LOCAL, REGIONAL
+    ativo = Column(Boolean, default=True)
+    data_expiracao = Column(Date, nullable=True)
     data_upload = Column(DateTime(timezone=True), server_default=func.now())
     # Ensuring multitenancy by associating with a loja
     loja_id = Column(Integer, ForeignKey("lojas.id"), nullable=False, index=True)
@@ -702,6 +708,7 @@ class Documento(BaseModel):
     loja = relationship("Loja", backref="documentos")
     enviado_por = relationship("Obreiro", backref="documentos_enviados")
     sessao = relationship("SessaoMaconica", back_populates="documentos")  # Back-populates from SessaoMaconica
+
 
 
 class Visita(BaseModel):
@@ -735,14 +742,39 @@ class Aviso(BaseModel):
     conteudo = Column(Text, nullable=False)
     data_expiracao = Column(Date, nullable=True)
     ativo = Column(Boolean, default=True)
+    origem = Column(String(50), default="LOJA", nullable=True)  # LOJA, CONSELHO_REGIONAL
+    nivel_prioridade = Column(String(20), default="NORMAL", nullable=True)  # NORMAL, ALTO, URGENTE
+    autor_nome = Column(String(255), nullable=True)
+    link_externo = Column(String(500), nullable=True)
     
     tipo = Column(SQLAlchemyEnum(TipoAvisoEnum, name="tipo_aviso_enum", values_callable=lambda x: [e.value for e in x]), nullable=False, default=TipoAvisoEnum.AVISO)
     
-    loja_id = Column(Integer, ForeignKey("lojas.id"), nullable=False, index=True)
+    loja_id = Column(Integer, ForeignKey("lojas.id"), nullable=True, index=True)
     publicacao_id = Column(Integer, ForeignKey("publicacoes.id"), nullable=True)
     
     loja = relationship("Loja", backref="avisos")
     publicacao = relationship("Publicacao", backref="avisos_vinculados")
+
+
+class PreviaAdmissao(BaseModel):
+    """Mural de Pedidos de Admissão e Editais (Iniciação, Regularização, Filiação)."""
+    __tablename__ = "previas_admissao"
+    id = Column(Integer, primary_key=True, index=True)
+    loja_id = Column(Integer, ForeignKey("lojas.id"), nullable=False, index=True)
+    tipo = Column(String(50), nullable=False)  # INICIACAO, REGULARIZACAO, FILIACAO
+    candidato_nome = Column(String(255), nullable=False)
+    pdf_url = Column(String(500), nullable=True)
+    pdf_nome_original = Column(String(255), nullable=True)
+    data_postagem = Column(Date, nullable=False, default=date.today)
+    data_limite = Column(Date, nullable=True)
+    status = Column(String(50), nullable=False, default="EM_ANDAMENTO")  # EM_ANDAMENTO, AVERIGUADO, CONCLUIDO
+    verificado_por_nome = Column(String(255), nullable=True)
+    data_verificacao = Column(DateTime(timezone=True), nullable=True)
+    autor_id = Column(String(255), nullable=True)
+    visibilidade = Column(String(20), default="REGIONAL", nullable=True)
+    
+    loja = relationship("Loja", backref="previas_admissao")
+
 
 
 class TipoPublicacaoEnum(str, enum.Enum):

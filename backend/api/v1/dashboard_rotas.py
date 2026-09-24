@@ -6,14 +6,15 @@ import calendar
 from datetime import date, datetime, timedelta
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Header
 from pydantic import BaseModel
-from sqlalchemy import func, or_
+from sqlalchemy import func, or_, and_
 from sqlalchemy.orm import Session, joinedload
 
 from core.auth_esigma import UsuarioEsigma, obter_usuario_esigma
 from core.dependencies import get_usuario_e_obreiro
 from core.resolver_loja import resolver_loja_id_ou_404
+from core.service_auth import validar_chave_de_servico
 from database import get_db
 from models import models
 
@@ -27,6 +28,10 @@ class NoticePayload(BaseModel):
     content: str
     lodge_id: Optional[str] = None
     expiration_date: Optional[date] = None
+    origem: Optional[str] = "LOJA"
+    nivel_prioridade: Optional[str] = "NORMAL"
+    autor_nome: Optional[str] = None
+    link_externo: Optional[str] = None
 
 
 class NoticeUpdatePayload(BaseModel):
@@ -34,6 +39,18 @@ class NoticeUpdatePayload(BaseModel):
     content: Optional[str] = None
     expiration_date: Optional[date] = None
     lodge_id: Optional[str] = None
+    nivel_prioridade: Optional[str] = None
+    link_externo: Optional[str] = None
+
+
+class AvisoRegionalCreatePayload(BaseModel):
+    titulo: str
+    conteudo: str
+    data_expiracao: Optional[date] = None
+    nivel_prioridade: Optional[str] = "NORMAL"
+    autor_nome: Optional[str] = "Conselho Regional"
+    link_externo: Optional[str] = None
+    loja_id: Optional[int] = None  # None indica broadcast para todas as lojas da região
 
 
 def _resolver_contexto_loja(
@@ -179,11 +196,15 @@ def _calcular_stats_loja(db: Session, loja_id_int: int) -> dict:
 
     upcoming_birthdays.sort(key=lambda x: x["date"])
 
-    # 4. Notices (Active)
+    # 4. Notices (Active - Loja local + Avisos do Conselho Regional)
     active_notices_query = (
         db.query(models.Aviso)
         .filter(
-            models.Aviso.loja_id == loja_id_int,
+            or_(
+                models.Aviso.loja_id == loja_id_int,
+                and_(models.Aviso.origem == "CONSELHO_REGIONAL", models.Aviso.loja_id.is_(None)),
+                and_(models.Aviso.origem == "CONSELHO_REGIONAL", models.Aviso.loja_id == loja_id_int),
+            ),
             models.Aviso.ativo.is_(True),
             or_(models.Aviso.data_expiracao.is_(None), models.Aviso.data_expiracao >= today),
         )
@@ -195,13 +216,20 @@ def _calcular_stats_loja(db: Session, loja_id_int: int) -> dict:
 
     active_notices_data = []
     for n in active_notices_list:
+        titulo_formatado = n.titulo
+        if n.origem == "CONSELHO_REGIONAL" and not titulo_formatado.startswith("[Conselho Regional]"):
+            titulo_formatado = f"[Conselho Regional] {titulo_formatado}"
         active_notices_data.append({
             "id": n.id,
-            "title": n.titulo,
+            "title": titulo_formatado,
             "content": n.conteudo,
             "date_posted": n.criado_em.isoformat() if n.criado_em else today.isoformat(),
             "expiration_date": n.data_expiracao.isoformat() if n.data_expiracao else None,
             "lodge_id": n.loja_id,
+            "origem": n.origem or "LOJA",
+            "nivel_prioridade": n.nivel_prioridade or "NORMAL",
+            "autor_nome": n.autor_nome,
+            "link_externo": n.link_externo,
         })
 
     # 5. Next Session
@@ -592,21 +620,35 @@ def get_notices(
     loja_id_int = _resolver_contexto_loja(db, usuario, alvo)
     avisos = (
         db.query(models.Aviso)
-        .filter(models.Aviso.loja_id == loja_id_int, models.Aviso.ativo.is_(True))
+        .filter(
+            or_(
+                models.Aviso.loja_id == loja_id_int,
+                and_(models.Aviso.origem == "CONSELHO_REGIONAL", models.Aviso.loja_id.is_(None)),
+                and_(models.Aviso.origem == "CONSELHO_REGIONAL", models.Aviso.loja_id == loja_id_int),
+            ),
+            models.Aviso.ativo.is_(True),
+        )
         .order_by(models.Aviso.criado_em.desc())
         .all()
     )
-    return [
-        {
+    res = []
+    for a in avisos:
+        titulo_formatado = a.titulo
+        if a.origem == "CONSELHO_REGIONAL" and not titulo_formatado.startswith("[Conselho Regional]"):
+            titulo_formatado = f"[Conselho Regional] {titulo_formatado}"
+        res.append({
             "id": a.id,
-            "title": a.titulo,
+            "title": titulo_formatado,
             "content": a.conteudo,
             "date_posted": a.criado_em.isoformat() if a.criado_em else date.today().isoformat(),
             "expiration_date": a.data_expiracao.isoformat() if a.data_expiracao else None,
             "lodge_id": a.loja_id,
-        }
-        for a in avisos
-    ]
+            "origem": a.origem or "LOJA",
+            "nivel_prioridade": a.nivel_prioridade or "NORMAL",
+            "autor_nome": a.autor_nome,
+            "link_externo": a.link_externo,
+        })
+    return res
 
 
 @router.post("/notices/", status_code=201, summary="Criar Aviso")
@@ -622,6 +664,10 @@ def create_notice(
         data_expiracao=payload.expiration_date,
         loja_id=loja_id_int,
         ativo=True,
+        origem=payload.origem or "LOJA",
+        nivel_prioridade=payload.nivel_prioridade or "NORMAL",
+        autor_nome=payload.autor_nome or (usuario.nome if usuario else None),
+        link_externo=payload.link_externo,
     )
     db.add(novo_aviso)
     db.commit()
@@ -633,6 +679,10 @@ def create_notice(
         "date_posted": novo_aviso.criado_em.isoformat() if novo_aviso.criado_em else date.today().isoformat(),
         "expiration_date": novo_aviso.data_expiracao.isoformat() if novo_aviso.data_expiracao else None,
         "lodge_id": novo_aviso.loja_id,
+        "origem": novo_aviso.origem,
+        "nivel_prioridade": novo_aviso.nivel_prioridade,
+        "autor_nome": novo_aviso.autor_nome,
+        "link_externo": novo_aviso.link_externo,
     }
 
 
@@ -653,6 +703,10 @@ def update_notice(
         aviso.conteudo = payload.content
     if payload.expiration_date is not None:
         aviso.data_expiracao = payload.expiration_date
+    if payload.nivel_prioridade is not None:
+        aviso.nivel_prioridade = payload.nivel_prioridade
+    if payload.link_externo is not None:
+        aviso.link_externo = payload.link_externo
 
     db.commit()
     db.refresh(aviso)
@@ -663,6 +717,10 @@ def update_notice(
         "date_posted": aviso.criado_em.isoformat() if aviso.criado_em else date.today().isoformat(),
         "expiration_date": aviso.data_expiracao.isoformat() if aviso.data_expiracao else None,
         "lodge_id": aviso.loja_id,
+        "origem": aviso.origem,
+        "nivel_prioridade": aviso.nivel_prioridade,
+        "autor_nome": aviso.autor_nome,
+        "link_externo": aviso.link_externo,
     }
 
 
@@ -680,3 +738,74 @@ def delete_notice(
     db.delete(aviso)
     db.commit()
     return {"message": "Aviso excluído com sucesso"}
+
+
+# --- COMUNICAÇÃO BIDIRECIONAL: CONSELHO REGIONAL -> LOJAS ---
+
+@router.post("/avisos/regional", status_code=201, summary="Publicar Aviso do Conselho Regional no Mural das Lojas")
+def publicar_aviso_regional(
+    payload: AvisoRegionalCreatePayload,
+    db: Session = Depends(get_db),
+    x_service_key: Optional[str] = Header(None, alias="X-Service-Key"),
+    x_operador_papel: Optional[str] = Header(None, alias="X-Operador-Papel"),
+):
+    """
+    Publica aviso oficial do Conselho Regional direcionado a uma loja específica ou
+    em modo broadcast para todas as oficinas da jurisdição regional.
+    Autorizado para chamadas inter-serviços com service key do CoReVM.
+    """
+    if not validar_chave_de_servico(x_service_key):
+        raise HTTPException(status_code=401, detail="Chave de serviço inválida ou ausente.")
+
+    novo_aviso = models.Aviso(
+        titulo=payload.titulo,
+        conteudo=payload.conteudo,
+        data_expiracao=payload.data_expiracao,
+        loja_id=payload.loja_id,
+        ativo=True,
+        origem="CONSELHO_REGIONAL",
+        nivel_prioridade=payload.nivel_prioridade or "NORMAL",
+        autor_nome=payload.autor_nome or "Conselho Regional",
+        link_externo=payload.link_externo,
+    )
+    db.add(novo_aviso)
+    db.commit()
+    db.refresh(novo_aviso)
+    return {
+        "status": "success",
+        "id": novo_aviso.id,
+        "titulo": novo_aviso.titulo,
+        "origem": novo_aviso.origem,
+        "loja_id": novo_aviso.loja_id,
+        "criado_em": novo_aviso.criado_em.isoformat() if novo_aviso.criado_em else None,
+    }
+
+
+@router.get("/avisos/regionais", summary="Listar Avisos Ativos do Conselho Regional")
+def listar_avisos_regionais(
+    loja_id: Optional[int] = None,
+    db: Session = Depends(get_db),
+    x_service_key: Optional[str] = Header(None, alias="X-Service-Key"),
+):
+    """Consulta avisos regionais publicados pelo conselho."""
+    query = db.query(models.Aviso).filter(
+        models.Aviso.origem == "CONSELHO_REGIONAL",
+        models.Aviso.ativo.is_(True)
+    )
+    if loja_id is not None:
+        query = query.filter(or_(models.Aviso.loja_id == loja_id, models.Aviso.loja_id.is_(None)))
+    avisos = query.order_by(models.Aviso.criado_em.desc()).all()
+    return [
+        {
+            "id": a.id,
+            "titulo": a.titulo,
+            "conteudo": a.conteudo,
+            "data_expiracao": a.data_expiracao.isoformat() if a.data_expiracao else None,
+            "nivel_prioridade": a.nivel_prioridade,
+            "autor_nome": a.autor_nome,
+            "link_externo": a.link_externo,
+            "loja_id": a.loja_id,
+            "criado_em": a.criado_em.isoformat() if a.criado_em else None,
+        }
+        for a in avisos
+    ]

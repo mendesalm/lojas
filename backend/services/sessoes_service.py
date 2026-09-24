@@ -171,6 +171,7 @@ def obter_sessao_detalhe(db: Session, sessao_id: int) -> SessaoResponse:
         tipo=tipo_str,
         subtipo=subtipo_str,
         status=sessao.status,
+        visibilidade=sessao.visibilidade or "LOCAL",
         pauta=sessao.pauta,
         cargos_temporarios=sessao.cargos_temporarios,
         total_presentes=total_presentes,
@@ -180,7 +181,7 @@ def obter_sessao_detalhe(db: Session, sessao_id: int) -> SessaoResponse:
 
 
 def criar_sessao(db: Session, payload: SessaoCreate) -> SessaoResponse:
-    """Cria e agenda uma nova sessão maçônica."""
+    """Cria e agenda uma nova sessão maçônica com visibilidade LOCAL ou REGIONAL."""
     sessao = SessaoMaconica(
         loja_id=payload.loja_id,
         gestao_id=payload.gestao_id,
@@ -192,6 +193,7 @@ def criar_sessao(db: Session, payload: SessaoCreate) -> SessaoResponse:
         tipo=payload.tipo,
         subtipo=payload.subtipo,
         status=payload.status or "AGENDADA",
+        visibilidade=payload.visibilidade or "LOCAL",
         pauta=payload.pauta,
         cargos_temporarios=payload.cargos_temporarios
     )
@@ -202,7 +204,7 @@ def criar_sessao(db: Session, payload: SessaoCreate) -> SessaoResponse:
 
 
 def atualizar_sessao(db: Session, sessao_id: int, payload: SessaoUpdate) -> SessaoResponse:
-    """Atualiza dados e status da sessão (ex: abrir, encerrar, alterar pauta)."""
+    """Atualiza dados e status da sessão (ex: abrir, encerrar, alterar pauta ou visibilidade)."""
     sessao = db.query(SessaoMaconica).filter(SessaoMaconica.id == sessao_id).first()
     if not sessao:
         raise HTTPException(status_code=404, detail="Sessão não encontrada.")
@@ -214,6 +216,48 @@ def atualizar_sessao(db: Session, sessao_id: int, payload: SessaoUpdate) -> Sess
     db.commit()
     db.refresh(sessao)
     return obter_sessao_detalhe(db, sessao_id)
+
+
+def listar_sessoes_regionais(
+    db: Session,
+    lojas_ids: Optional[List[int]] = None,
+    a_partir_de: Optional[date] = None,
+) -> List[SessaoResumo]:
+    """Retorna eventos e sessões com visibilidade REGIONAL para consumo na Agenda Regional do CoReVM."""
+    query = db.query(SessaoMaconica).filter(SessaoMaconica.visibilidade == "REGIONAL")
+
+    if lojas_ids:
+        query = query.filter(SessaoMaconica.loja_id.in_(lojas_ids))
+
+    if a_partir_de:
+        query = query.filter(SessaoMaconica.data_sessao >= a_partir_de)
+
+    sessoes = query.order_by(SessaoMaconica.data_sessao.asc()).all()
+
+    resumos = []
+    for s in sessoes:
+        tipo_str = s.tipo.value if hasattr(s.tipo, "value") else str(s.tipo or "")
+        subtipo_str = s.subtipo.value if hasattr(s.subtipo, "value") else str(s.subtipo or "")
+
+        resumos.append(
+            SessaoResumo(
+                id=s.id,
+                titulo=s.titulo,
+                numero_sessao=s.numero_sessao,
+                data_sessao=s.data_sessao,
+                hora_inicio=s.hora_inicio,
+                hora_fim=s.hora_fim,
+                tipo=tipo_str,
+                subtipo=subtipo_str,
+                status=s.status,
+                visibilidade=s.visibilidade or "REGIONAL",
+                loja_id=s.loja_id,
+                total_presentes=0,
+                total_visitantes=0,
+            )
+        )
+    return resumos
+
 
 
 def registrar_presenca_sessao(
