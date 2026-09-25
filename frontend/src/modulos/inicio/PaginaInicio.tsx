@@ -64,6 +64,7 @@ import LodgeNoticesWidget from './components/LodgeNoticesWidget';
 import LodgeSessionsWidget from './components/LodgeSessionsWidget';
 import QuickAccessWidget from './components/QuickAccessWidget';
 import { useAuth } from '@/compartilhado/contextos/AuthContext';
+import { obterUrlLojasBase } from '@/compartilhado/servicos/configuracaoApi';
 import { useTheme } from '@mui/material/styles';
 import { normalizeEventType, EVENT_COLORS, ACCENT_COLOR } from './constants/LodgeDashboardConstants';
 
@@ -528,7 +529,7 @@ export const PaginaInicio: React.FC = () => {
                                             >
                                                 <TableCell sx={{ borderBottom: 'none', borderTopLeftRadius: '50px', borderBottomLeftRadius: '50px', pl: 3, py: 1.2 }}>
                                                     <Avatar
-                                                        src={member.profile_picture_path ? `${import.meta.env.VITE_LOJAS_API_URL || 'http://localhost:8001'}${member.profile_picture_path}` : undefined}
+                                                        src={member.profile_picture_path ? `${obterUrlLojasBase()}${member.profile_picture_path}` : undefined}
                                                         alt={member.full_name}
                                                         sx={{ width: 40, height: 40, border: `2px solid ${corGrau}`, bgcolor: alpha(corGrau, 0.1), color: corGrau, fontWeight: 700 }}
                                                     >
@@ -602,7 +603,7 @@ export const PaginaInicio: React.FC = () => {
                                 <Card sx={{ bgcolor: theme.palette.background.paper, border: `1px solid ${theme.palette.divider}`, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', p: 3, transition: 'all 0.2s', '&:hover': { transform: 'translateY(-4px)', borderColor: ACCENT_COLOR } }}>
                                     <Box sx={{ position: 'relative', mb: 2 }}>
                                         <Avatar
-                                            src={member.profile_picture_path ? `${import.meta.env.VITE_LOJAS_API_URL || 'http://localhost:8001'}${member.profile_picture_path}` : undefined}
+                                            src={member.profile_picture_path ? `${obterUrlLojasBase()}${member.profile_picture_path}` : undefined}
                                             alt={member.full_name}
                                             sx={{ width: 80, height: 80, border: `2px solid ${member.degree === 'Aprendiz' ? theme.palette.success.main : member.degree === 'Companheiro' ? theme.palette.info.main : theme.palette.warning.main}` }}
                                         >

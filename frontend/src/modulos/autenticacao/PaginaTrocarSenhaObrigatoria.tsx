@@ -6,8 +6,9 @@ import { useNavigate } from 'react-router-dom';
 import HeroBackground from '@/compartilhado/componentes/HeroBackground';
 import LogoAnimadaLojas from '@/compartilhado/componentes/LogoAnimadaLojas';
 import { useAuth, clienteHttp } from '@/compartilhado/contextos/AuthContext';
+import { obterUrlEsigmaApi } from '@/compartilhado/servicos/configuracaoApi';
 
-const ESIGMA_API_URL = import.meta.env.VITE_ESIGMA_API_URL || 'http://localhost:8000/api/v1';
+const ESIGMA_API_URL = obterUrlEsigmaApi();
 
 export const PaginaTrocarSenhaObrigatoria: React.FC = () => {
   const [senhaAtual, setSenhaAtual] = useState('');

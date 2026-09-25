@@ -1,6 +1,7 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios, { AxiosError } from 'axios';
+import { obterUrlLojasApi, obterUrlEsigmaApi } from '@/compartilhado/servicos/configuracaoApi';
 
 export interface Usuario {
   id: string;
@@ -45,7 +46,7 @@ interface AuthContextType {
 }
 
 export const clienteHttp = axios.create({
-  baseURL: import.meta.env.VITE_LOJAS_API_URL || 'http://localhost:8001/api/v1',
+  baseURL: obterUrlLojasApi(),
   headers: {
     'Content-Type': 'application/json',
   },
@@ -229,7 +230,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // 2. SSO Multi-Domínio: se não tiver localmente, tenta restaurar via cookie de SSO do e-Sigma
       if (!storedToken) {
         try {
-          const esigmaApiUrl = import.meta.env.VITE_ESIGMA_API_URL || 'http://localhost:8000/api/v1';
+          const esigmaApiUrl = obterUrlEsigmaApi();
           const resp = await axios.get(`${esigmaApiUrl}/auth/sso/session`, { withCredentials: true });
           if (resp.data?.access_token && isTokenValido(resp.data.access_token)) {
             const tokenSso = String(resp.data.access_token);
@@ -297,7 +298,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Notifica o e-Sigma para revogar o cookie de SSO multi-domínio
     try {
-      const esigmaApiUrl = import.meta.env.VITE_ESIGMA_API_URL || 'http://localhost:8000/api/v1';
+      const esigmaApiUrl = obterUrlEsigmaApi();
       await axios.post(`${esigmaApiUrl}/auth/logout`, {}, { withCredentials: true });
     } catch {
       // Ignora erro de rede durante o logout

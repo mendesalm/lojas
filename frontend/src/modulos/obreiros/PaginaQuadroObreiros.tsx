@@ -40,6 +40,7 @@ import {
   FilterList as FilterIcon
 } from '@mui/icons-material';
 import { useAuth, clienteHttp, extrairMensagemErro } from '@/compartilhado/contextos/AuthContext';
+import { obterUrlLojasBase } from '@/compartilhado/servicos/configuracaoApi';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -347,7 +348,7 @@ export const PaginaQuadroObreiros: React.FC = () => {
                       }}
                     >
                       <Avatar
-                        src={ob.caminho_foto_perfil ? `${import.meta.env.VITE_LOJAS_API_URL || 'http://localhost:8001'}${ob.caminho_foto_perfil}` : undefined}
+                        src={ob.caminho_foto_perfil ? `${obterUrlLojasBase()}${ob.caminho_foto_perfil}` : undefined}
                         alt={ob.nome_completo}
                         sx={{
                           width: 34,

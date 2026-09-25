@@ -19,6 +19,7 @@ import {
 } from '@mui/material';
 import { Close as CloseIcon, PhotoCamera } from '@mui/icons-material';
 import { clienteHttp, extrairMensagemErro } from '@/compartilhado/contextos/AuthContext';
+import { obterUrlLojasBase } from '@/compartilhado/servicos/configuracaoApi';
 
 interface LodgeDetailsModalProps {
   open: boolean;
@@ -72,7 +73,7 @@ export const LodgeDetailsModal: React.FC<LodgeDetailsModalProps> = ({
   useEffect(() => {
     if (lodgeData) {
       setFormData({ ...lodgeData });
-      const apiBase = import.meta.env.VITE_LOJAS_API_URL || 'http://localhost:8001';
+      const apiBase = obterUrlLojasBase();
       setLogoPreview(lodgeData.logo_path ? `${apiBase}${lodgeData.logo_path}` : null);
     }
   }, [lodgeData]);

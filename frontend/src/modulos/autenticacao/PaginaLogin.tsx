@@ -8,12 +8,13 @@ import type { LojaItem } from '../../compartilhado/contextos/AuthContext';
 import { HeroBackground } from '../../compartilhado/componentes/HeroBackground';
 import { LogoAnimadaLojas } from '../../compartilhado/componentes/LogoAnimadaLojas';
 import { GoogleLogin } from '@react-oauth/google';
+import { obterUrlEsigmaApi, obterUrlLojasApi } from '@/compartilhado/servicos/configuracaoApi';
 
 // Integração real contra o e-Sigma (IdP central do ecossistema)
 // Metodologia idêntica à do CoReVM: o Lojas não valida senhas localmente,
 // delega a autenticação para o e-Sigma e valida o token via GET /auth/validate.
-const ESIGMA_API_URL = import.meta.env.VITE_ESIGMA_API_URL || 'http://localhost:8000/api/v1';
-const API_URL = import.meta.env.VITE_LOJAS_API_URL || 'http://localhost:8001/api/v1';
+const ESIGMA_API_URL = obterUrlEsigmaApi();
+const API_URL = obterUrlLojasApi();
 
 /**
  * Decodifica (sem verificar assinatura — isso já foi feito pelo e-Sigma)

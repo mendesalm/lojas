@@ -1,0 +1,30 @@
+name: Deploy Automático Lojas
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Executar comandos na VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_IP }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            # Acessar a pasta onde o projeto Lojas está na VPS
+            cd /var/www/lojas
+            git pull origin main
+            
+            # Atualiza e reinicia Backend
+            source venv/bin/activate
+            pip install -r backend/requirements.txt
+            sudo systemctl restart lojas || sudo systemctl restart lojas_backend || true
+            
+            # Atualiza e compila Frontend
+            cd frontend
+            npm install
+            npm run build

@@ -5,8 +5,9 @@ import { Building2, Hash, Landmark, User, Mail, Phone, Briefcase, GraduationCap,
 import { useNavigate } from 'react-router-dom';
 import HeroBackground from '@/compartilhado/componentes/HeroBackground';
 import LogoAnimadaLojas from '@/compartilhado/componentes/LogoAnimadaLojas';
+import { obterUrlEsigmaApi } from '@/compartilhado/servicos/configuracaoApi';
 
-const ESIGMA_API_URL = import.meta.env.VITE_ESIGMA_API_URL || 'http://localhost:8000/api/v1';
+const ESIGMA_API_URL = obterUrlEsigmaApi();
 
 const GRAUS_MACONICOS = [
   { valor: 1, rotulo: 'Aprendiz' },

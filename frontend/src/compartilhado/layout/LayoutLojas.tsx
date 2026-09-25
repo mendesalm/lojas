@@ -36,6 +36,7 @@ import {
 import { useAuth, clienteHttp, type LojaItem } from '@/compartilhado/contextos/AuthContext';
 import { LogoAnimadaLojas } from '@/compartilhado/componentes/LogoAnimadaLojas';
 import { LodgeDetailsModal } from '@/compartilhado/componentes/LodgeDetailsModal';
+import { obterUrlLojasBase } from '@/compartilhado/servicos/configuracaoApi';
 import { LodgeIcon } from '@/assets/icons/LodgeIcon';
 import { MemberPanelIcon } from '@/assets/icons/MemberPanelIcon';
 import { AdminIcon } from '@/assets/icons/AdminIcon';
@@ -291,7 +292,7 @@ export const LayoutLojas: React.FC = () => {
                 {lojaInfo.logo_path && (
                   <Box
                     component="img"
-                    src={`${import.meta.env.VITE_LOJAS_API_URL || 'http://localhost:8001'}${lojaInfo.logo_path}`}
+                    src={`${obterUrlLojasBase()}${lojaInfo.logo_path}`}
                     alt="Logo da Loja"
                     sx={{
                       height: { xs: 32, md: 44 },

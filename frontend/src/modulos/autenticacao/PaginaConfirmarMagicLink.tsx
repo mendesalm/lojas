@@ -6,8 +6,9 @@ import { Loader2, XCircle } from 'lucide-react';
 import { useAuth } from '@/compartilhado/contextos/AuthContext';
 import HeroBackground from '@/compartilhado/componentes/HeroBackground';
 import LogoAnimadaLojas from '@/compartilhado/componentes/LogoAnimadaLojas';
+import { obterUrlEsigmaApi } from '@/compartilhado/servicos/configuracaoApi';
 
-const ESIGMA_API_URL = import.meta.env.VITE_ESIGMA_API_URL || 'http://localhost:8000/api/v1';
+const ESIGMA_API_URL = obterUrlEsigmaApi();
 
 function decodificarPayloadJwt(token: string): any {
   try {
