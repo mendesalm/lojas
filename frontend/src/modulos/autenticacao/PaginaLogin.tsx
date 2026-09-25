@@ -1,28 +1,33 @@
 // EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState } from 'react';
 import axios from 'axios';
-import { UserCircle2, Lock, Landmark, ArrowRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import {
+  Container,
+  Box,
+  Typography,
+  TextField,
+  Button,
+  Link,
+  CircularProgress,
+  FormControlLabel,
+  Checkbox,
+  IconButton,
+  InputAdornment,
+  Alert,
+} from '@mui/material';
+import { Visibility, VisibilityOff, ArrowForward, AccountBalance } from '@mui/icons-material';
 import { useAuth, clienteHttp } from '../../compartilhado/contextos/AuthContext';
 import type { LojaItem } from '../../compartilhado/contextos/AuthContext';
 import { HeroBackground } from '../../compartilhado/componentes/HeroBackground';
 import { LogoAnimadaLojas } from '../../compartilhado/componentes/LogoAnimadaLojas';
 import { GoogleLogin } from '@react-oauth/google';
+import type { CredentialResponse } from '@react-oauth/google';
 import { obterUrlEsigmaApi, obterUrlLojasApi } from '@/compartilhado/servicos/configuracaoApi';
 
-// Integração real contra o e-Sigma (IdP central do ecossistema)
-// Metodologia idêntica à do CoReVM: o Lojas não valida senhas localmente,
-// delega a autenticação para o e-Sigma e valida o token via GET /auth/validate.
 const ESIGMA_API_URL = obterUrlEsigmaApi();
 const API_URL = obterUrlLojasApi();
 
-/**
- * Decodifica (sem verificar assinatura — isso já foi feito pelo e-Sigma)
- * o payload de um JWT só para preencher os dados de exibição do usuário no
- * AuthContext local. A fonte de verdade da identidade continua sendo o
- * e-Sigma: qualquer chamada de API sensível revalida o token no backend via
- * GET /auth/validate (core/auth_esigma.py do Lojas).
- */
 function decodificarPayloadJwt(token: string): any {
   try {
     const payloadBase64 = token.split('.')[1];
@@ -38,9 +43,6 @@ function decodificarPayloadJwt(token: string): any {
   }
 }
 
-/**
- * Consulta o backend do Lojas para resolver o vínculo da Loja do usuário.
- */
 async function buscarMinhaLoja(): Promise<{ loja_id?: number; loja_nome?: string } | null> {
   try {
     const resposta = await clienteHttp.get(`${API_URL}/obreiros/meu-perfil`);
@@ -59,6 +61,8 @@ async function buscarMinhaLoja(): Promise<{ loja_id?: number; loja_nome?: string
 export const PaginaLogin: React.FC = () => {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [lembrarMe, setLembrarMe] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
   const [lojasParaEscolha, setLojasParaEscolha] = useState<LojaItem[]>([]);
@@ -66,7 +70,7 @@ export const PaginaLogin: React.FC = () => {
   const navigate = useNavigate();
   const { login, setLojaAtivaId, selecionarLoja, carregarLojasDisponiveis } = useAuth();
 
-  const handleGoogleSuccess = async (credentialResponse: any) => {
+  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
     setErro(null);
     setCarregando(true);
     try {
@@ -115,13 +119,12 @@ export const PaginaLogin: React.FC = () => {
     }
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErro(null);
     setCarregando(true);
 
     try {
-      // Login real: POST /auth/login no e-Sigma (IdP central).
       const resposta = await axios.post(`${ESIGMA_API_URL}/auth/login`, {
         username: email,
         password: senha,
@@ -166,223 +169,279 @@ export const PaginaLogin: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden z-0">
-      {/* Background Animado Idêntico ao CoReVM */}
-      <HeroBackground />
+    <Box
+      sx={{
+        color: 'text.primary',
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'relative',
+        overflow: 'hidden',
+        bgcolor: '#050508',
+      }}
+    >
+      {/* Background Animado de Partículas idêntico ao e-Sigma */}
+      <Box sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}>
+        <HeroBackground />
+      </Box>
 
-      <div className="w-full max-w-md relative z-10">
-        {/* Cartão de Login ou Seleção de Loja - Glassmorphism */}
-        <div className="bg-[#1a1a1a]/60 backdrop-blur-xl rounded-3xl p-8 sm:p-10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-yellow-500/20">
+      <Container
+        component="main"
+        maxWidth="sm"
+        sx={{
+          position: 'relative',
+          zIndex: 1,
+          margin: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexGrow: 1,
+          py: 4,
+        }}
+      >
+        <Box
+          className="card-deep-blue-glass"
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            p: { xs: 4, md: 6 },
+            width: '100%',
+          }}
+        >
+          {/* Logo Animada Exclusiva de Lojas com Brasão Dourado */}
+          <Box sx={{ mb: 1, mt: 1, display: 'flex', justifyContent: 'center' }}>
+            <LogoAnimadaLojas theme="ouro" width={100} height={100} showText={false} animated={true} />
+          </Box>
 
-          {/* Logo e Título */}
-          <div className="flex flex-col items-center text-center mb-6">
-            <div id="hero-logo" className="mb-3">
-              <LogoAnimadaLojas width={95} height={95} animated={true} />
-            </div>
-
-            <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 to-yellow-200 tracking-wider font-sans drop-shadow-[0_0_10px_rgba(234,179,8,0.2)]">
-              E-Sigma: Lojas
-            </h1>
-            <p className="text-sm text-gray-400 mt-1 font-sans">
-              Sistema de Gestão de Oficinas Maçônicas
-            </p>
-          </div>
+          {/* Título e Subtítulo Padronizados como Clone Visual do e-Sigma */}
+          <Typography
+            component="h1"
+            variant="h4"
+            sx={{
+              mb: 1,
+              fontWeight: 700,
+              fontFamily: "'Tektur', sans-serif",
+              background: 'linear-gradient(135deg, #FDE68A 0%, #DDB96B 50%, #B8862D 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              filter: 'drop-shadow(0 0 10px rgba(221, 185, 107, 0.35))',
+              textAlign: 'center'
+            }}
+          >
+            Acesso Restrito
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 4, color: 'text.secondary', textAlign: 'center' }}>
+            {lojasParaEscolha.length > 0 
+              ? 'Selecione a Loja para iniciar seus trabalhos'
+              : 'Insira suas credenciais para continuar'}
+          </Typography>
 
           {/* Alerta de Erro */}
           {erro && (
-            <div className="mb-6 p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-xs text-red-200 text-center">
+            <Alert severity="error" sx={{ width: '100%', mb: 3 }}>
               {erro}
-            </div>
+            </Alert>
           )}
 
           {lojasParaEscolha.length > 0 ? (
-            /* Menu de Seleção de Loja quando Pluri-filiado / Duplicidade Detectada */
-            <div className="space-y-5 animate-fadeIn">
-              <div className="flex flex-col items-center text-center">
-                <div className="w-12 h-12 rounded-2xl bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center text-yellow-500 mb-2.5 shadow-[0_0_15px_rgba(234,179,8,0.25)]">
-                  <Landmark className="w-6 h-6" />
-                </div>
-                <h2 className="text-lg font-bold text-white tracking-wide">
-                  Selecione a Loja de Destino
-                </h2>
-                <p className="text-xs text-gray-400 mt-1">
-                  Identificamos que seu obreiro possui filiação a múltiplas Oficinas. Escolha para qual Loja deseja direcionar seus trabalhos nesta sessão:
-                </p>
-              </div>
+            /* Seleção de Loja quando Pluri-filiado */
+            <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1, p: 2, borderRadius: 2, bgcolor: 'rgba(221,185,107,0.08)', border: '1px solid rgba(221,185,107,0.2)' }}>
+                <AccountBalance sx={{ color: '#DDB96B' }} />
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  Identificamos múltiplos vínculos ativos. Selecione a Loja de destino para esta sessão:
+                </Typography>
+              </Box>
 
-              <div className="space-y-2.5">
-                {lojasParaEscolha.map((loja) => (
-                  <button
-                    key={loja.id}
-                    type="button"
-                    onClick={() => {
-                      selecionarLoja(loja);
-                      navigate('/inicio', { replace: true });
-                    }}
-                    className="w-full text-left p-3.5 rounded-2xl bg-[#222]/90 hover:bg-yellow-500/15 border border-gray-700 hover:border-yellow-500/60 transition-all flex items-center justify-between group shadow-sm hover:shadow-yellow-500/10 cursor-pointer"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center text-yellow-500 group-hover:bg-yellow-500 group-hover:text-black transition-colors shrink-0">
-                        <Landmark className="w-4.5 h-4.5" />
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-bold text-white group-hover:text-yellow-400 transition-colors">
-                          {loja.titulo_loja || 'ARLS'} {loja.nome_loja} nº {loja.numero_loja}
-                        </h3>
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          {loja.rito ? `Rito ${loja.rito}` : 'Rito Maçônico'} {loja.classe ? `• ${loja.classe}` : ''}
-                        </p>
-                        {loja.filiacao && (
-                          <p className="text-[11px] text-gray-500 mt-0.5 truncate max-w-[280px]">
-                            {loja.filiacao.split('\n')[0]}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-gray-500 group-hover:text-yellow-400 group-hover:translate-x-1 transition-all shrink-0 ml-2" />
-                  </button>
-                ))}
-              </div>
-
-              <p className="text-[11px] text-gray-500 text-center">
-                Você também poderá alternar livremente entre as suas Lojas a qualquer momento pelo menu superior.
-              </p>
-
-              <div className="pt-2 text-center">
-                <button
-                  type="button"
-                  onClick={() => setLojasParaEscolha([])}
-                  className="text-xs text-gray-400 hover:text-yellow-500 transition-colors underline"
+              {lojasParaEscolha.map((loja) => (
+                <Box
+                  key={loja.id}
+                  onClick={() => {
+                    selecionarLoja(loja);
+                    navigate('/inicio', { replace: true });
+                  }}
+                  sx={{
+                    p: 2,
+                    borderRadius: 2,
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    bgcolor: 'rgba(10, 20, 40, 0.6)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    transition: 'all 0.2s',
+                    '&:hover': {
+                      border: '1px solid #DDB96B',
+                      bgcolor: 'rgba(221, 185, 107, 0.1)',
+                    }
+                  }}
                 >
-                  Voltar à tela de identificação
-                </button>
-              </div>
-            </div>
+                  <Box>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#FFFFFF' }}>
+                      {loja.titulo_loja || 'ARLS'} {loja.nome_loja} nº {loja.numero_loja}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                      {loja.rito ? `Rito ${loja.rito}` : 'Rito Maçônico'} {loja.classe ? `• ${loja.classe}` : ''}
+                    </Typography>
+                  </Box>
+                  <ArrowForward sx={{ color: '#DDB96B' }} />
+                </Box>
+              ))}
+
+              <Button
+                variant="text"
+                onClick={() => setLojasParaEscolha([])}
+                sx={{ mt: 2, color: 'text.secondary', '&:hover': { color: '#DDB96B' } }}
+              >
+                Voltar à tela de identificação
+              </Button>
+            </Box>
           ) : (
-            /* Formulário Normal de Login */
-            <>
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div>
-                  <div className="relative group">
-                    <input
-                      type="text"
-                      id="identificador"
-                      autoComplete="username"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder=" "
-                      className="peer w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
+            /* Formulário Principal de Login */
+            <Box component="form" onSubmit={handleFormSubmit} noValidate sx={{ width: '100%' }}>
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                id="email"
+                label="E-mail, CIM ou CPF"
+                name="email"
+                autoComplete="username"
+                autoFocus
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={carregando}
+                variant="outlined"
+                sx={{ mb: 2 }}
+              />
+
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                name="password"
+                label="Senha"
+                type={mostrarSenha ? 'text' : 'password'}
+                id="password"
+                autoComplete="current-password"
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                disabled={carregando}
+                variant="outlined"
+                sx={{ mb: 2 }}
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label="alternar visibilidade da senha"
+                          onClick={() => setMostrarSenha(!mostrarSenha)}
+                          edge="end"
+                          sx={{ color: 'text.secondary' }}
+                        >
+                          {mostrarSenha ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }
+                }}
+              />
+
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      value="remember"
+                      color="primary"
+                      checked={lembrarMe}
+                      onChange={(e) => setLembrarMe(e.target.checked)}
+                      disabled={carregando}
                     />
-                    <label
-                      htmlFor="identificador"
-                      className="absolute left-12 top-1.5 text-[10px] text-gray-500 transition-all pointer-events-none peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-[10px] peer-focus:text-yellow-500"
-                    >
-                      E-mail, CIM ou CPF
-                    </label>
-                    <UserCircle2 className="w-5 h-5 text-gray-500 absolute left-4 top-3.5 peer-focus:text-yellow-500 transition-colors" />
-                  </div>
-                </div>
-
-                <div>
-                  <div className="relative group">
-                    <input
-                      type="password"
-                      id="senha"
-                      required
-                      value={senha}
-                      onChange={(e) => setSenha(e.target.value)}
-                      placeholder=" "
-                      className="peer w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
-                    />
-                    <label
-                      htmlFor="senha"
-                      className="absolute left-12 top-1.5 text-[10px] text-gray-500 transition-all pointer-events-none peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-[10px] peer-focus:text-yellow-500"
-                    >
-                      Senha
-                    </label>
-                    <Lock className="w-5 h-5 text-gray-500 absolute left-4 top-3.5 peer-focus:text-yellow-500 transition-colors" />
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={carregando}
-                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-500 hover:to-yellow-400 text-black font-bold py-3.5 px-4 rounded-xl text-sm shadow-[0_4px_14px_rgba(234,179,8,0.2)] hover:shadow-[0_6px_20px_rgba(234,179,8,0.4)] transition-all cursor-pointer disabled:opacity-50 mt-4"
+                  }
+                  label={<Typography variant="body2" sx={{ color: 'text.secondary' }}>Lembrar-me</Typography>}
+                />
+                <Link
+                  component={RouterLink}
+                  to="/esqueci-senha"
+                  variant="body2"
+                  sx={{ color: '#DDB96B', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
                 >
-                  {carregando ? (
-                    <span>Autenticando...</span>
-                  ) : (
-                    <span>Acessar Oficina</span>
-                  )}
-                </button>
+                  Esqueci a senha
+                </Link>
+              </Box>
 
-                {/* Recuperação de senha */}
-                <div className="text-center">
-                  <button
-                    type="button"
-                    onClick={() => navigate('/esqueci-senha')}
-                    className="text-xs text-gray-400 hover:text-yellow-500 transition-colors underline"
-                  >
-                    Esqueci minha senha
-                  </button>
-                </div>
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                disabled={carregando}
+                className="btn-masonic-pill btn-pill-blue"
+                sx={{
+                  py: 1.5,
+                  mb: 3,
+                  fontSize: '1rem',
+                }}
+              >
+                {carregando ? <CircularProgress size={24} color="inherit" /> : 'Entrar'}
+              </Button>
 
-                {/* Magic link */}
-                <div className="text-center mt-2">
-                  <button
-                    type="button"
-                    onClick={() => navigate('/entrar-com-link')}
-                    className="text-xs text-gray-400 hover:text-yellow-500 transition-colors underline"
-                  >
-                    Entrar sem senha (link por e-mail)
-                  </button>
-                </div>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                <Box sx={{ flex: 1, height: '1px', bgcolor: 'rgba(255,255,255,0.1)' }} />
+                <Typography variant="body2" sx={{ px: 2, color: 'text.secondary' }}>ou</Typography>
+                <Box sx={{ flex: 1, height: '1px', bgcolor: 'rgba(255,255,255,0.1)' }} />
+              </Box>
 
-                {/* Passkey */}
-                <div className="text-center mt-2">
-                  <button
-                    type="button"
-                    onClick={() => navigate('/entrar-com-passkey')}
-                    className="text-xs text-gray-400 hover:text-yellow-500 transition-colors underline"
-                  >
-                    Entrar com passkey
-                  </button>
-                </div>
-              </form>
-
-              {/* Solicitação de Cadastro */}
-              <div className="text-center mt-4">
-                <button
-                  type="button"
-                  onClick={() => navigate('/solicitar-cadastro')}
-                  className="text-xs text-gray-400 hover:text-yellow-500 transition-colors underline"
-                >
-                  Ainda não tem cadastro? Solicite seu acesso aqui
-                </button>
-              </div>
-
-              <div className="flex items-center my-6">
-                <div className="flex-1 h-px bg-white/10"></div>
-                <span className="px-4 text-xs text-slate-500">ou</span>
-                <div className="flex-1 h-px bg-white/10"></div>
-              </div>
-
-              <div className="flex justify-center mb-6">
+              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
                 <GoogleLogin
                   onSuccess={handleGoogleSuccess}
-                  onError={() => setErro('Ocorreu um erro ao tentar fazer login com o Google')}
+                  onError={() => {
+                    setErro('Ocorreu um erro ao tentar fazer login com o Google');
+                  }}
                   theme="filled_black"
                   text="continue_with"
-                  width="380"
+                  width="100%"
                 />
-              </div>
-            </>
-          )}
+              </Box>
 
-        </div>
-      </div>
-    </div>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, alignItems: 'center', mt: 2 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Não tem uma conta?{' '}
+                  <Link
+                    component={RouterLink}
+                    to="/solicitar-cadastro"
+                    sx={{ color: '#DDB96B', textDecoration: 'none', fontWeight: 600, '&:hover': { textDecoration: 'underline' } }}
+                  >
+                    Solicitar cadastro
+                  </Link>
+                </Typography>
+
+                <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
+                  <Link
+                    component={RouterLink}
+                    to="/entrar-com-link"
+                    variant="caption"
+                    sx={{ color: 'text.secondary', textDecoration: 'none', '&:hover': { color: '#DDB96B', textDecoration: 'underline' } }}
+                  >
+                    Entrar sem senha (link)
+                  </Link>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>•</Typography>
+                  <Link
+                    component={RouterLink}
+                    to="/entrar-com-passkey"
+                    variant="caption"
+                    sx={{ color: 'text.secondary', textDecoration: 'none', '&:hover': { color: '#DDB96B', textDecoration: 'underline' } }}
+                  >
+                    Entrar com passkey
+                  </Link>
+                </Box>
+              </Box>
+            </Box>
+          )}
+        </Box>
+      </Container>
+    </Box>
   );
 };
 
