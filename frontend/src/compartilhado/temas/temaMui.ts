@@ -8,55 +8,55 @@ export const obterTemaLojas = (modo: 'dark' | 'light') => {
     palette: {
       mode: modo,
       primary: {
-        main: isDark ? '#38bdf8' : '#0284c7', // Ciano neon / Dark sky blue
-        light: isDark ? '#7dd3fc' : '#38bdf8',
-        dark: isDark ? '#0284c7' : '#075985',
-        contrastText: isDark ? '#082f49' : '#ffffff',
+        main: isDark ? '#DDB96B' : '#0284c7', // Ouro Maçônico Canônico
+        light: isDark ? '#FDE68A' : '#38bdf8',
+        dark: isDark ? '#B8862D' : '#075985',
+        contrastText: isDark ? '#070B12' : '#ffffff',
       },
       secondary: {
-        main: isDark ? '#94a3b8' : '#475569',
-        light: '#cbd5e1',
-        dark: '#334155',
-        contrastText: '#ffffff',
+        main: isDark ? '#FDE68A' : '#475569',
+        light: '#FFF3C4',
+        dark: '#B8862D',
+        contrastText: '#070B12',
       },
       warning: {
-        main: '#C49A45', // Dourado Maçônico Canônico
-        light: '#F3E5AB',
-        dark: '#B8860B',
+        main: '#DDB96B', // Dourado Maçônico Canônico
+        light: '#FDE68A',
+        dark: '#B8862D',
       },
       background: {
-        default: isDark ? '#0b111b' : '#f8fafc', // Deep Navy Maçônico
-        paper: isDark ? '#131b29' : '#ffffff', // Lighter Navy para cards
+        default: isDark ? '#050508' : '#f8fafc', // Fundo Preto Abissal
+        paper: isDark ? '#0d1b35' : '#ffffff', // Deep Blue
       },
       text: {
-        primary: isDark ? '#f1f5f9' : '#0f172a',
-        secondary: isDark ? '#94a3b8' : '#64748B',
+        primary: isDark ? '#ffffff' : '#0f172a',
+        secondary: isDark ? '#CBD5E1' : '#64748B',
       },
-      divider: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
+      divider: isDark ? 'rgba(221, 185, 107, 0.2)' : 'rgba(0, 0, 0, 0.08)',
     },
     typography: {
       fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-      h4: { fontWeight: 700, color: isDark ? '#f1f5f9' : '#0f172a' },
-      h5: { fontWeight: 700, letterSpacing: '-0.02em', color: isDark ? '#f1f5f9' : '#0f172a' },
-      h6: { fontWeight: 600, letterSpacing: '-0.01em', color: isDark ? '#f1f5f9' : '#0f172a' },
-      subtitle1: { fontWeight: 500 },
-      body1: { color: isDark ? '#f1f5f9' : '#1e293b' },
-      body2: { color: isDark ? '#94a3b8' : '#64748b' },
+      h4: { fontWeight: 700, color: isDark ? '#FDE68A' : '#0f172a' },
+      h5: { fontWeight: 700, letterSpacing: '-0.02em', color: isDark ? '#ffffff' : '#0f172a' },
+      h6: { fontWeight: 600, letterSpacing: '-0.01em', color: isDark ? '#DDB96B' : '#0f172a' },
+      subtitle1: { fontWeight: 500, color: isDark ? '#ffffff' : '#1e293b' },
+      body1: { color: isDark ? '#ffffff' : '#1e293b' },
+      body2: { color: isDark ? '#CBD5E1' : '#64748b' },
       button: {
         textTransform: 'none',
         fontWeight: 600,
       },
     },
     shape: {
-      borderRadius: 8,
+      borderRadius: 12,
     },
     components: {
       MuiAppBar: {
         styleOverrides: {
           root: {
-            backgroundColor: isDark ? '#0b111b' : '#ffffff',
-            borderBottom: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)'}`,
-            boxShadow: 'none',
+            backgroundColor: isDark ? '#070e1c' : '#ffffff',
+            borderBottom: `1px solid ${isDark ? 'rgba(221, 185, 107, 0.2)' : 'rgba(0, 0, 0, 0.08)'}`,
+            boxShadow: isDark ? '0 4px 20px rgba(0, 0, 0, 0.8)' : 'none',
             borderRadius: 0,
           },
         },
@@ -64,8 +64,8 @@ export const obterTemaLojas = (modo: 'dark' | 'light') => {
       MuiDrawer: {
         styleOverrides: {
           paper: {
-            backgroundColor: isDark ? '#0b111b' : '#ffffff',
-            borderRight: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)'}`,
+            backgroundColor: isDark ? '#070e1c' : '#ffffff',
+            borderRight: `1px solid ${isDark ? 'rgba(221, 185, 107, 0.2)' : 'rgba(0, 0, 0, 0.08)'}`,
             borderRadius: 0,
           },
         },
@@ -73,23 +73,29 @@ export const obterTemaLojas = (modo: 'dark' | 'light') => {
       MuiButton: {
         styleOverrides: {
           root: {
-            borderRadius: 8,
+            borderRadius: 9999, // Formato Pill idêntico ao anexo
             textTransform: 'none',
             fontWeight: 600,
-            boxShadow: 'none',
+            letterSpacing: '0.03em',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           },
           contained: {
-            background: isDark
-              ? 'linear-gradient(135deg, rgba(8, 47, 73, 0.8) 0%, rgba(3, 105, 161, 0.4) 100%)'
+            backgroundImage: isDark
+              ? 'linear-gradient(180deg, #163663 0%, #091a33 100%), linear-gradient(180deg, #FDE68A 0%, #DDB96B 50%, #785012 100%)'
               : 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
-            color: isDark ? '#e0f2fe' : '#ffffff',
-            border: isDark ? '1px solid rgba(56, 189, 248, 0.5)' : 'none',
-            boxShadow: isDark ? '0 0 10px rgba(56, 189, 248, 0.2)' : '0 2px 8px rgba(2, 132, 199, 0.3)',
+            backgroundClip: 'padding-box, border-box',
+            backgroundOrigin: 'padding-box, border-box',
+            border: isDark ? '2px solid transparent' : 'none',
+            color: '#ffffff',
+            boxShadow: isDark 
+              ? '0 8px 20px -4px rgba(0, 0, 0, 0.8), 0 0 15px rgba(221, 185, 107, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.4)' 
+              : '0 2px 8px rgba(2, 132, 199, 0.3)',
             '&:hover': {
-              background: isDark
-                ? 'linear-gradient(135deg, rgba(8, 47, 73, 1) 0%, rgba(3, 105, 161, 0.6) 100%)'
+              backgroundImage: isDark
+                ? 'linear-gradient(180deg, #1e457d 0%, #0d2345 100%), linear-gradient(180deg, #FFF3C4 0%, #FDE68A 50%, #936214 100%)'
                 : 'linear-gradient(135deg, #0369a1 0%, #075985 100%)',
-              borderColor: '#38bdf8',
+              boxShadow: isDark ? '0 12px 24px -4px rgba(0, 0, 0, 0.9), 0 0 25px rgba(221, 185, 107, 0.45)' : 'none',
+              transform: 'translateY(-1.5px)',
             },
           },
         },
@@ -97,35 +103,41 @@ export const obterTemaLojas = (modo: 'dark' | 'light') => {
       MuiCard: {
         styleOverrides: {
           root: {
-            borderRadius: 8,
+            borderRadius: 16,
             backgroundImage: 'none',
-            backgroundColor: isDark ? '#131b29' : '#ffffff',
-            border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)'}`,
-            boxShadow: isDark ? '0 4px 20px rgba(0, 0, 0, 0.2)' : '0 4px 20px rgba(0, 0, 0, 0.04)',
+            backgroundColor: isDark ? 'rgba(14, 28, 54, 0.75)' : '#ffffff',
+            backdropFilter: isDark ? 'blur(20px) saturate(180%)' : 'none',
+            border: `1px solid ${isDark ? 'rgba(221, 185, 107, 0.22)' : 'rgba(0, 0, 0, 0.08)'}`,
+            borderTop: `1px solid ${isDark ? 'rgba(253, 230, 138, 0.4)' : 'rgba(0, 0, 0, 0.08)'}`,
+            boxShadow: isDark 
+              ? '0 16px 40px -10px rgba(0, 0, 0, 0.85), 0 0 25px -5px rgba(14, 28, 54, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08)' 
+              : '0 4px 20px rgba(0, 0, 0, 0.04)',
           },
         },
       },
       MuiPaper: {
         styleOverrides: {
           root: {
-            borderRadius: 12,
             backgroundImage: 'none',
-            backgroundColor: isDark ? '#131b29' : '#ffffff',
-            border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)'}`,
+            backgroundColor: isDark ? 'rgba(14, 28, 54, 0.75)' : '#ffffff',
+            backdropFilter: isDark ? 'blur(20px) saturate(180%)' : 'none',
+            borderRadius: 16,
+            border: `1px solid ${isDark ? 'rgba(221, 185, 107, 0.22)' : 'rgba(0, 0, 0, 0.08)'}`,
+            boxShadow: isDark ? '0 16px 40px -10px rgba(0, 0, 0, 0.85), 0 0 25px -5px rgba(14, 28, 54, 0.45)' : '0 4px 20px rgba(0, 0, 0, 0.04)',
           },
         },
       },
       MuiTableCell: {
         styleOverrides: {
           head: {
-            fontWeight: 600,
-            color: isDark ? '#38bdf8' : '#0369a1',
-            backgroundColor: isDark ? '#131b29' : '#f8fafc',
-            borderBottom: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)'}`,
+            fontWeight: 700,
+            color: isDark ? '#FDE68A' : '#0369a1',
+            backgroundColor: isDark ? 'rgba(7, 15, 30, 0.95)' : '#f8fafc',
+            borderBottom: `1px solid ${isDark ? 'rgba(221, 185, 107, 0.2)' : 'rgba(0, 0, 0, 0.08)'}`,
           },
           body: {
-            color: isDark ? '#f1f5f9' : '#0f172a',
-            borderBottom: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)'}`,
+            color: isDark ? '#ffffff' : '#0f172a',
+            borderBottom: `1px solid ${isDark ? 'rgba(221, 185, 107, 0.1)' : 'rgba(0, 0, 0, 0.08)'}`,
           },
         },
       },
