@@ -113,6 +113,22 @@ Em vez de descentralizar as funcionalidades operacionais da Loja em bancos de da
   - Atualização de dependências Python e reinício do serviço systemd (`lojas`).
   - Instalação de pacotes e compilação do frontend (`npm run build`) gerando o `dist/` atualizado.
 
+### 2.5 Design System Soberano e Tela de Login Clone do e-Sigma (25 de Setembro de 2026)
+- **Design System Soberano**:
+  - Implementado em `index.css`: Fundo Abissal (`#050508`), cards `.card-deep-blue-glass`, botões `.btn-masonic-pill .btn-pill-blue` com aro chanfrado dourado metálico.
+  - Favicon em ouro maçônico e `favicon.ico` gerado com cache busting `?v=3`.
+- **Tela de Login Padronizada (`PaginaLogin.tsx`)**:
+  - Clone visual fiel da tela de login do `e-sigma.app`:
+    - Canvas de partículas animadas `HeroBackground`.
+    - Card central com `.card-deep-blue-glass` e `LogoAnimadaLojas` dourada animada (100x100).
+    - Título "Acesso Restrito" em gradiente dourado e subtítulo neutro.
+    - Campos MUI de usuário e senha com alternância de visibilidade.
+    - Botão `.btn-masonic-pill .btn-pill-blue` "Entrar".
+    - Divisor "ou", botão de login Google e links auxiliares.
+    - Preservação total de regras de negócio: seleção de múltiplas lojas quando pluri-filiado e redirecionamento para `/trocar-senha-obrigatoria`.
+- **Deploy em Produção**:
+  - Verificado em `https://lojas.e-sigma.app` respondendo HTTP 200 com bundle compilado ativo.
+
 ---
 
 ## 3. O que deve ser continuado na próxima sessão
