@@ -1,7 +1,7 @@
-# Handoff — Módulo Lojas (Atualização 24 de Setembro de 2026)
+# Handoff — Módulo Lojas (Atualização 25 de Setembro de 2026)
 
-**Data da Sessão:** 24 de Setembro de 2026  
-**Status Global:** 🟢 Serviços Operacionais, SSO Multi-Domínio Concluído, Endpoints de Integração API-First com CoReVM Ativos e Testados.
+**Data da Sessão:** 25 de Setembro de 2026  
+**Status Global:** 🟢 Serviços Operacionais, Frontend SPA Integrado ao FastAPI, URLs Dinâmicas em Produção, Logo Dourado Animado e Deploy Automático Ativo.
 
 
 ---
@@ -78,6 +78,40 @@ Em vez de descentralizar as funcionalidades operacionais da Loja em bancos de da
   - `GET /api/v1/obreiros/busca-identificador/{identificador}`: consulta unificada por CIM, CPF ou ID com lista de mandatos ativos.
 - **Via Dupla de Avisos Regionais**:
   - Endpoints em `admissoes_rotas.py` e `documentos_rotas.py` permitindo que avisos oficiais emitidos pelo Conselho Regional no CoReVM sejam replicados diretamente para o mural do ERP Lojas.
+
+---
+
+## 2. Entregas da Sessão (25 de Setembro de 2026)
+
+### 2.1 Resolução da Rota Raiz em Produção (`https://lojas.e-sigma.app`)
+- **Causa Raiz Identificada:** Em produção, as requisições para `https://lojas.e-sigma.app` eram direcionadas via proxy reverso Nginx para o backend FastAPI (porta 8001), que apenas respondia com o endpoint de teste `@app.get("/") -> {"message": "Lojas API is running"}`. O backend não estava configurado para servir a Single Page Application (SPA) React compilada.
+- **Solução Implementada em `backend/main.py`:**
+  - Montagem de `StaticFiles` da pasta `frontend/dist/assets` para `/assets`.
+  - Implementação do manipulador `servir_frontend_spa(full_path: str)`:
+    - Preserva intactos todos os endpoints de `/api/v1/*`, `/docs`, `/openapi.json`, `/redoc` e `/health`.
+    - Serve diretamente qualquer arquivo estático presente em `dist/` (ex.: `Lojas_Icon.svg`, `favicon.svg`).
+    - Redireciona todas as rotas de navegação da SPA (`/`, `/login`, `/inicio`, `/obreiros`, etc.) para `frontend/dist/index.html`.
+  - Validação via testes automatizados locais com `fastapi.testclient.TestClient` confirmando retorno `HTTP 200` com `Content-Type: text/html; charset=utf-8` para `/`, `/login` e `/inicio`.
+
+### 2.2 Resolução Dinâmica de URLs da API em Runtime (`configuracaoApi.ts`)
+- **Problema:** O frontend utilizava fallback estático para `http://localhost:8001/api/v1` e `http://localhost:8000/api/v1`, o que causava falha de rede ao tentar contactar `localhost` a partir do navegador de clientes em produção.
+- **Solução:** Criado o utilitário `frontend/src/compartilhado/servicos/configuracaoApi.ts`:
+  - `obterUrlLojasApi()`: Detecta o domínio em produção e utiliza a rota relativa `/api/v1` (mesma origem `lojas.e-sigma.app`), com fallback para `localhost:8001` apenas em desenvolvimento.
+  - `obterUrlLojasBase()`: Fornece a URL base sem o sufixo `/api/v1` para imagens e uploads de logotipos de Lojas.
+  - `obterUrlEsigmaApi()`: Aponta dinamicamente para `https://e-sigma.app/api/v1` em produção para o IdP central e SSO.
+  - Atualizados `AuthContext.tsx`, `PaginaLogin.tsx`, `PaginaInicio.tsx`, `PaginaQuadroObreiros.tsx`, `LayoutLojas.tsx` e modais.
+
+### 2.3 Transformação Estética e Vetorial do Logo `Lojas_Icon.svg`
+- Substituição da paleta ciano por gradientes de ouro maçônico (`lodgeGoldGradient`, `lodgeGoldLightGradient`, `lodgeGoldDarkGradient`) compatíveis com `LodgeIcon.tsx`.
+- Animações CSS nativas de flutuação (`lodgeFloat`) e pulso radiante (`lodgeGlowPulse`), além de variações interativas em hover.
+- Sincronização nos assets de `frontend/public/` e `frontend/src/assets/icons/`.
+
+### 2.4 Automação de CI/CD para a VPS (`.github/workflows/deploy.yml`)
+- Criado o workflow GitHub Actions no padrão do ecossistema Sigma, disparado no `push` da branch `main`:
+  - Conexão segura via SSH (`appleboy/ssh-action@v1.0.3`).
+  - Execução de `git pull origin main` em `/var/www/lojas`.
+  - Atualização de dependências Python e reinício do serviço systemd (`lojas`).
+  - Instalação de pacotes e compilação do frontend (`npm run build`) gerando o `dist/` atualizado.
 
 ---
 
