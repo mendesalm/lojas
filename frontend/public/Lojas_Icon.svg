@@ -1,11 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <!-- Creator: CorelDRAW (Versão OEM) -->
-<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="96.9382mm" height="89.5783mm" version="1.1" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
-viewBox="0 0 940260 868872"
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="512" height="512" version="1.1" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
+viewBox="-204870 -240564 1350000 1350000"
  xmlns:xlink="http://www.w3.org/1999/xlink"
  xmlns:xodm="http://www.corel.com/coreldraw/odm/2003">
  <defs>
+  <!-- Fundo Azul Profundo Maçônico -->
+  <radialGradient id="lojaBgAzulProfundo" cx="50%" cy="50%" r="70%">
+    <stop offset="0%" stop-color="#0f2244" />
+    <stop offset="65%" stop-color="#070e1c" />
+    <stop offset="100%" stop-color="#040812" />
+  </radialGradient>
   <!-- Gradiente Dourado Mestre (Lodge Gold Gradient - #DDB96B a #B8862D) -->
   <linearGradient id="lodgeGoldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
     <stop offset="0%" stop-color="#FDE68A">
@@ -99,7 +105,11 @@ viewBox="0 0 940260 868872"
    ]]>
   </style>
  </defs>
- <g id="Camada_x0020_1" class="lojas-animated-symbol">
+
+  <!-- Fundo Azul Profundo para PWA Maskable e Standalone -->
+  <rect x="-204870" y="-240564" width="1350000" height="1350000" fill="url(#lojaBgAzulProfundo)" />
+
+  <g id="Camada_x0020_1" class="lojas-animated-symbol">
   <metadata id="CorelCorpID_0Corel-Layer"/>
   <path class="fil0" d="M272734 346477c-3062,10493 -5607,21094 -7569,31646 -1152,6201 -2113,12422 -2868,18632 28789,-18907 59866,-34010 92657,-44671 36557,-11886 75215,-18265 115176,-18265 54961,0 107437,12067 155363,33931 49700,22674 94428,55871 131882,97055 33012,36300 60401,78790 80614,125759 18270,42457 30687,88640 36100,137284 1727,-685 3492,-1291 5292,-1815 5349,-1556 10947,-2390 16671,-2390 4831,0 9590,598 14202,1727 560,137 1115,282 1669,435 -5675,-52848 -19069,-103114 -38914,-149396 -21928,-51141 -51741,-97442 -87722,-137006 -41076,-45168 -90153,-81546 -144699,-106355 -52475,-23866 -110046,-37037 -170459,-37037 -35510,0 -69981,4529 -102958,13087 -33030,8571 -64662,21199 -94438,37379z"/>
   <path class="fil0" d="M192936 419848c426,-6404 1013,-12810 1754,-19223 -4622,3996 -9163,8088 -13623,12268 -8991,8429 -17697,17274 -26095,26509 -35981,39564 -65794,85864 -87723,137006 -19843,46282 -33238,96548 -38913,149396 554,-152 1110,-298 1669,-435 4611,-1129 9371,-1727 14202,-1727 5724,0 11320,834 16670,2390 1801,524 3568,1130 5294,1816 5615,-50360 18962,-99557 39662,-145329 21206,-46893 50140,-90249 86389,-127649 -305,-11785 -55,-23452 714,-35021z"/>

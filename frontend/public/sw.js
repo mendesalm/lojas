@@ -1,10 +1,12 @@
 // Service Worker PWA para Lojas
-const CACHE_NAME = 'lojas-pwa-cache-v1';
+const CACHE_NAME = 'lojas-pwa-cache-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/favicon.svg',
   '/Lojas_Icon.svg',
+  '/icon-192.png',
+  '/icon-512.png',
   '/manifest.json'
 ];
 
