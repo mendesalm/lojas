@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Lojas</string>
+    <string name="title_activity_main">Lojas</string>
+    <string name="package_name">com.esigma.lojas</string>
+    <string name="custom_url_scheme">com.esigma.lojas</string>
+</resources>
