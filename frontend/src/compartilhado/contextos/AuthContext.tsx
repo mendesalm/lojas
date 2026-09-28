@@ -224,8 +224,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const carregarSessao = async () => {
-      // 1. SSO local: busca token válido nas chaves locais (Lojas -> CoReVM -> e-Sigma)
-      let storedToken = obterTokenSessaoValido();
+      // 0. SSO via URL query (?sso_token=... ou ?token=...) vindo do Hub e-Sigma
+      let storedToken: string | null = null;
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const urlToken = params.get('sso_token') || params.get('token');
+        if (urlToken && isTokenValido(urlToken)) {
+          storedToken = urlToken;
+          localStorage.setItem('@lojas:token', urlToken);
+          params.delete('sso_token');
+          params.delete('token');
+          const remainingQuery = params.toString() ? `?${params.toString()}` : '';
+          window.history.replaceState({}, document.title, `${window.location.pathname}${remainingQuery}`);
+        }
+      }
+
+      // 1. SSO local: busca token válido nas chaves locais se não veio na URL
+      if (!storedToken) {
+        storedToken = obterTokenSessaoValido();
+      }
 
       // 2. SSO Multi-Domínio: se não tiver localmente, tenta restaurar via cookie de SSO do e-Sigma
       if (!storedToken) {
