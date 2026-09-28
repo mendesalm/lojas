@@ -45,6 +45,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth, clienteHttp, extrairMensagemErro } from '@/compartilhado/contextos/AuthContext';
 import { gerarLinkGoogleCalendar, baixarArquivoIcs } from '@/compartilhado/utilitarios/calendarioExport';
+import { feedbackTatil } from '@/compartilhado/utilitarios/dispositivoNativo';
 
 export const PaginaSessoes: React.FC = () => {
   const { lojaAtivaId } = useAuth();
@@ -110,6 +111,7 @@ export const PaginaSessoes: React.FC = () => {
         loja_id: lojaAtivaId,
         numero_sessao: novaSessao.numero_sessao ? parseInt(novaSessao.numero_sessao) : null,
       });
+      feedbackTatil.sucesso();
       setModalAgendamentoAberto(false);
       carregarSessoes();
       setNovaSessao({
@@ -122,6 +124,7 @@ export const PaginaSessoes: React.FC = () => {
         pauta: '',
       });
     } catch (err) {
+      feedbackTatil.erro();
       setErroAgendamento(extrairMensagemErro(err, 'Erro ao agendar sessão.'));
     } finally {
       setSalvandoSessao(false);
@@ -867,7 +870,10 @@ export const PaginaSessoes: React.FC = () => {
       <Fab
         color="primary"
         aria-label="Nova Sessão"
-        onClick={() => setModalAgendamentoAberto(true)}
+        onClick={() => {
+          feedbackTatil.clique();
+          setModalAgendamentoAberto(true);
+        }}
         sx={{
           position: 'fixed',
           bottom: { xs: 80, sm: 28 },
