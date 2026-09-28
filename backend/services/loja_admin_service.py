@@ -102,11 +102,52 @@ def atualizar_dados_loja(db: Session, loja_id: int, payload: LojaDadosUpdate) ->
         loja.numero = dados.pop("numero")
 
     if "rito" in dados and dados["rito"] is not None:
-        rito_val = dados.pop("rito")
-        try:
-            loja.rito = RitoEnum(rito_val)
-        except Exception:
-            loja.rito = rito_val
+        rito_val = str(dados.pop("rito")).strip()
+        # Mapa de normalização: aceita variações de nome do frontend e converte
+        # para o valor canônico armazenado no ENUM do PostgreSQL (RitoEnum.value).
+        # Qualquer string não reconhecida tenta match direto no Enum antes de rejeitar.
+        _mapa_rito = {
+            # REAA — variações
+            "reaa": RitoEnum.REAA,
+            "rito escocês antigo e aceito": RitoEnum.REAA,
+            "rito escocês": RitoEnum.REAA,
+            "escotes antigo e aceito": RitoEnum.REAA,
+            # York
+            "rito york": RitoEnum.YORK,
+            "york": RitoEnum.YORK,
+            "rito de york": RitoEnum.YORK,
+            # Schroder
+            "rito schroder": RitoEnum.SCHRODER,
+            "rito schröder": RitoEnum.SCHRODER,
+            "schroder": RitoEnum.SCHRODER,
+            "schröder": RitoEnum.SCHRODER,
+            # Brasileiro
+            "rito brasileiro": RitoEnum.BRASILEIRO,
+            "brasileiro": RitoEnum.BRASILEIRO,
+            # Moderno
+            "rito moderno": RitoEnum.MODERNO,
+            "moderno": RitoEnum.MODERNO,
+            # Adonhiramita
+            "rito adonhiramita": RitoEnum.ADONHIRAMITA,
+            "adonhiramita": RitoEnum.ADONHIRAMITA,
+            # Escocês Retificado
+            "rito escocês retificado": RitoEnum.RER,
+            "escocês retificado": RitoEnum.RER,
+            "rer": RitoEnum.RER,
+        }
+        chave = rito_val.lower()
+        rito_enum = _mapa_rito.get(chave)
+        if rito_enum is None:
+            # Tenta match direto pelo value do Enum (ex: já é "REAA", "Rito York", etc.)
+            try:
+                rito_enum = RitoEnum(rito_val)
+            except Exception:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Rito '{rito_val}' não é um valor válido. Valores aceitos: {[e.value for e in RitoEnum]}"
+                )
+        loja.rito = rito_enum
+
 
     if "dia_sessao" in dados and dados["dia_sessao"] is not None:
         dia_val = str(dados.pop("dia_sessao")).strip().lower()
