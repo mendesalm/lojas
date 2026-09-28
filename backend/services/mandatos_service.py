@@ -330,14 +330,17 @@ def verificar_status_vm_lote(db: Session, ids: List[int]) -> dict:
         vm = vm_por_loja_id.get(l.id)
         retorno[l.id] = vm
         retorno[str(l.id)] = vm
-        if l.numero_loja:
-            retorno[str(l.numero_loja)] = vm
-            if l.numero_loja.isdigit():
-                retorno[int(l.numero_loja)] = vm
 
     for req_id in ids:
-        if req_id not in retorno:
-            retorno[req_id] = None
+        if req_id not in retorno and str(req_id) not in retorno:
+            match = next((l for l in lojas if str(l.numero_loja) == str(req_id)), None)
+            if match:
+                vm = vm_por_loja_id.get(match.id)
+                retorno[req_id] = vm
+                retorno[str(req_id)] = vm
+            else:
+                retorno[req_id] = None
+                retorno[str(req_id)] = None
 
     return retorno
 
