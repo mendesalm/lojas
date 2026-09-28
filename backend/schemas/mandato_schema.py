@@ -4,7 +4,7 @@ Schemas Pydantic para Mandatos, Posse de Cargos e Gestão de Oficiais de Lojas.
 Suporta consultas detalhadas, transições de cargos, saneamento de diretoria e auditoria.
 """
 from datetime import date
-from typing import List, Optional
+from typing import List, Optional, Union
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -77,4 +77,4 @@ class VmMandatoUpdatePayload(BaseModel):
 
 
 class VmStatusLotePayload(BaseModel):
-    ids: List[int]
+    ids: List[Union[int, str]]

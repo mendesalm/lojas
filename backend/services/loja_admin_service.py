@@ -3,7 +3,7 @@
 Serviço de administração institucional da Loja:
 Dados cadastrais do templo/endereço, Comissões e Mural de Avisos da Secretaria.
 """
-from typing import List, Optional
+from typing import List, Optional, Union
 from datetime import date
 from fastapi import HTTPException
 from sqlalchemy.orm import Session, joinedload
@@ -179,32 +179,53 @@ def buscar_lojas_termo(db: Session, termo: str, limite: int = 20) -> List[LojaBu
     return resultado
 
 
-def buscar_lojas_por_ids(db: Session, ids: List[int]) -> List[LojaBuscaItem]:
-    """Busca detalhes de múltiplas lojas por lista de IDs ou números maçônicos."""
+def buscar_lojas_por_ids(db: Session, ids: List[Union[int, str]]) -> List[LojaBuscaItem]:
+    """Busca detalhes de múltiplas lojas estritamente por ID numérico ou codigo_loja (UUID).
+    NUNCA filtra por numero_loja, que é identidade de título da loja e pode se repetir."""
     if not ids:
         return []
-    ids_validos = [i for i in ids if isinstance(i, int)]
-    if not ids_validos:
+
+    ids_validos_int = []
+    codigos_validos_str = []
+
+    for item in ids:
+        if isinstance(item, int):
+            ids_validos_int.append(item)
+        elif isinstance(item, str):
+            item_limpo = item.strip()
+            if item_limpo.isdigit():
+                ids_validos_int.append(int(item_limpo))
+            elif item_limpo:
+                codigos_validos_str.append(item_limpo)
+
+    clausulas = []
+    if ids_validos_int:
+        clausulas.append(Loja.id.in_(ids_validos_int))
+    if codigos_validos_str:
+        clausulas.append(Loja.codigo_loja.in_(codigos_validos_str))
+
+    if not clausulas:
         return []
-    ids_str = [str(i) for i in ids_validos]
+
     lojas = (
         db.query(Loja)
         .options(joinedload(Loja.potencia))
-        .filter(or_(Loja.id.in_(ids_validos), Loja.numero_loja.in_(ids_str)))
+        .filter(or_(*clausulas))
         .all()
     )
     resultado = []
     for l in lojas:
         rito_str = l.rito.value if hasattr(l.rito, "value") else str(l.rito or "")
         pot_str = l.potencia.sigla if (l.potencia and l.potencia.sigla) else (l.potencia.nome if l.potencia else "")
-        num_str = str(l.numero_loja) if l.numero_loja else (str(l.numero) if l.numero else None)
+        num_loja_str = str(l.numero_loja) if l.numero_loja is not None else ""
         resultado.append(
             LojaBuscaItem(
                 id=l.id,
+                codigo_loja=l.codigo_loja,
                 nome=l.nome_loja,
                 nome_loja=l.nome_loja,
-                numero=num_str,
-                numero_loja=num_str,
+                numero=num_loja_str,
+                numero_loja=num_loja_str,
                 cidade=l.cidade or "",
                 estado=l.estado or "",
                 potencia=pot_str,

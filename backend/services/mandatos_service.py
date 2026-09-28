@@ -6,7 +6,7 @@ Secretário, Tesoureiro, Chanceler, etc.), encerramento de mandatos, histórico,
 marcação tradicional de 'Mestre Instalado' para ex-VMs e consultas em lote.
 """
 from datetime import date
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session, joinedload
@@ -291,24 +291,42 @@ def listar_mandatos_loja(
     return lista
 
 
-def verificar_status_vm_lote(db: Session, ids: List[int]) -> dict:
-    """Verifica e retorna o nome do Venerável Mestre ativo para um lote de IDs ou números de Lojas."""
+def verificar_status_vm_lote(db: Session, ids: List[Union[int, str]]) -> dict:
+    """Verifica e retorna o nome do Venerável Mestre ativo para um lote de Lojas (por ID numérico ou codigo_loja).
+    NUNCA usa numero_loja como chave de busca relacional."""
     if not ids:
         return {}
 
     hoje = date.today()
-    ids_validos = [i for i in ids if isinstance(i, int)]
-    if not ids_validos:
-        return {}
-    ids_str = [str(i) for i in ids_validos]
+    ids_validos_int = []
+    codigos_validos_str = []
+
+    for item in ids:
+        if isinstance(item, int):
+            ids_validos_int.append(item)
+        elif isinstance(item, str):
+            item_limpo = item.strip()
+            if item_limpo.isdigit():
+                ids_validos_int.append(int(item_limpo))
+            elif item_limpo:
+                codigos_validos_str.append(item_limpo)
+
+    clausulas = []
+    if ids_validos_int:
+        clausulas.append(Loja.id.in_(ids_validos_int))
+    if codigos_validos_str:
+        clausulas.append(Loja.codigo_loja.in_(codigos_validos_str))
+
+    if not clausulas:
+        return {req_id: None for req_id in ids}
 
     lojas = (
         db.query(Loja)
-        .filter(or_(Loja.id.in_(ids_validos), Loja.numero_loja.in_(ids_str)))
+        .filter(or_(*clausulas))
         .all()
     )
     if not lojas:
-        return {loja_id: None for loja_id in ids}
+        return {req_id: None for req_id in ids}
 
     lojas_ids = [l.id for l in lojas]
 
@@ -330,17 +348,13 @@ def verificar_status_vm_lote(db: Session, ids: List[int]) -> dict:
         vm = vm_por_loja_id.get(l.id)
         retorno[l.id] = vm
         retorno[str(l.id)] = vm
+        if l.codigo_loja:
+            retorno[l.codigo_loja] = vm
 
     for req_id in ids:
         if req_id not in retorno and str(req_id) not in retorno:
-            match = next((l for l in lojas if str(l.numero_loja) == str(req_id)), None)
-            if match:
-                vm = vm_por_loja_id.get(match.id)
-                retorno[req_id] = vm
-                retorno[str(req_id)] = vm
-            else:
-                retorno[req_id] = None
-                retorno[str(req_id)] = None
+            retorno[req_id] = None
+            retorno[str(req_id)] = None
 
     return retorno
 

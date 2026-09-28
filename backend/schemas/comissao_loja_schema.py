@@ -3,7 +3,7 @@
 Schemas Pydantic para Comissões da Loja, Avisos da Secretaria e Dados Institucionais da Loja.
 """
 from datetime import date, time, datetime
-from typing import List, Optional
+from typing import List, Optional, Union, Any
 from pydantic import BaseModel, ConfigDict
 
 
@@ -127,6 +127,7 @@ class LojaDadosUpdate(BaseModel):
 
 class LojaBuscaItem(BaseModel):
     id: int
+    codigo_loja: Optional[str] = None
     nome: str
     nome_loja: Optional[str] = None
     numero: Optional[str] = None
@@ -163,5 +164,5 @@ class LojaCreateOnTheFlyPayload(BaseModel):
 
 
 class LojaMultiplasBuscaPayload(BaseModel):
-    ids: List[int]
+    ids: List[Union[int, str]]
 
