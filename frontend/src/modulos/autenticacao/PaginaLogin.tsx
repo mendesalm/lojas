@@ -401,7 +401,7 @@ export const PaginaLogin: React.FC = () => {
                   }}
                   theme="filled_black"
                   text="continue_with"
-                  width="100%"
+                  width="380"
                 />
               </Box>
 
