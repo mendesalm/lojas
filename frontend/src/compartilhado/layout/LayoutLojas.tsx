@@ -31,9 +31,11 @@ import {
   Logout as LogoutIcon,
   ArrowDropDown as ArrowDropDownIcon,
   SwapHoriz as SwapHorizIcon,
-  Check as CheckIcon
+  Check as CheckIcon,
+  GetApp as GetAppIcon
 } from '@mui/icons-material';
 import { useAuth, clienteHttp, type LojaItem } from '@/compartilhado/contextos/AuthContext';
+import { usePwaInstall } from '@/compartilhado/hooks/usePwaInstall';
 import { LogoAnimadaLojas } from '@/compartilhado/componentes/LogoAnimadaLojas';
 import { LodgeDetailsModal } from '@/compartilhado/componentes/LodgeDetailsModal';
 import { obterUrlLojasBase } from '@/compartilhado/servicos/configuracaoApi';
@@ -47,6 +49,7 @@ const DRAWER_WIDTH = 260;
 const HEADER_HEIGHT = 70;
 
 export const LayoutLojas: React.FC = () => {
+  const { podeInstalar, dispararInstalacao } = usePwaInstall();
   const theme = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -206,6 +209,51 @@ export const LayoutLojas: React.FC = () => {
             </ListItem>
           );
         })}
+
+        {podeInstalar && (
+          <ListItem disablePadding sx={{ mb: 1, mt: 1 }}>
+            <ListItemButton
+              onClick={dispararInstalacao}
+              sx={{
+                borderRadius: 2,
+                bgcolor: 'rgba(212, 175, 55, 0.15)',
+                color: modoTema === 'dark' ? '#D4AF37' : '#B8860B',
+                border: '1px solid rgba(212, 175, 55, 0.3)',
+                '&:hover': {
+                  bgcolor: 'rgba(212, 175, 55, 0.25)',
+                },
+              }}
+            >
+              <ListItemIcon
+                sx={{
+                  minWidth: 44,
+                  width: 44,
+                  height: 44,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'inherit',
+                  mr: 1,
+                }}
+              >
+                <GetAppIcon />
+              </ListItemIcon>
+              <ListItemText
+                primary={
+                  <Typography
+                    sx={{
+                      fontSize: '0.88rem',
+                      fontWeight: 600,
+                      fontFamily: '"Inter", sans-serif',
+                    }}
+                  >
+                    Instalar Aplicativo
+                  </Typography>
+                }
+              />
+            </ListItemButton>
+          </ListItem>
+        )}
       </List>
 
       {/* Rodapé Oficial SiGMa com Logo Animada */}
@@ -434,8 +482,26 @@ export const LayoutLojas: React.FC = () => {
             )}
           </Box>
 
-          {/* Lado Direito: Switch de Tema, Usuário e Logout */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 3 } }}>
+          {/* Lado Direito: Instalar App, Switch de Tema, Usuário e Logout */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, md: 2 } }}>
+            {podeInstalar && (
+              <Chip
+                icon={<GetAppIcon sx={{ fontSize: '15px !important' }} />}
+                label="Instalar App"
+                size="small"
+                onClick={dispararInstalacao}
+                sx={{
+                  bgcolor: (t) => t.palette.mode === 'dark' ? 'rgba(212, 175, 55, 0.2)' : 'rgba(212, 175, 55, 0.3)',
+                  color: modoTema === 'dark' ? '#D4AF37' : '#B8860B',
+                  fontWeight: 600,
+                  fontSize: '0.75rem',
+                  border: '1px solid rgba(212, 175, 55, 0.4)',
+                  cursor: 'pointer',
+                  '&:hover': { bgcolor: 'rgba(212, 175, 55, 0.4)' },
+                }}
+              />
+            )}
+
             <Switch
               checked={modoTema === 'dark'}
               onChange={alternarModoTema}

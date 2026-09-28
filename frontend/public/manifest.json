@@ -1,0 +1,25 @@
+{
+  "name": "SiGMa - Módulo Lojas",
+  "short_name": "Lojas",
+  "description": "Sistema Integrado de Gerenciamento Maçônico - Gestão Completa de Oficinas",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#070e1c",
+  "theme_color": "#070e1c",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/Lojas_Icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192 512x512",
+      "purpose": "any"
+    }
+  ]
+}
