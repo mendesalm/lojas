@@ -547,11 +547,141 @@ export const LayoutLojas: React.FC = () => {
           overflow: 'auto',
           pt: { xs: 1, md: 1 },
           px: { xs: 1, md: 2 },
-          pb: { xs: 1, md: 1 },
+          pb: { xs: 10, md: 1 },
         }}
       >
         <Box sx={{ maxWidth: '100%', margin: '0 auto', height: '100%' }}>
           <Outlet />
+        </Box>
+      </Box>
+
+      {/* Mobile Bottom Navigation Bar (Thumb Zone) */}
+      <Box
+        component="nav"
+        sx={{
+          display: { xs: 'flex', md: 'none' },
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: 60,
+          bgcolor: modoTema === 'dark' ? 'rgba(7, 14, 28, 0.96)' : 'rgba(255, 255, 255, 0.96)',
+          backdropFilter: 'blur(12px)',
+          borderTop: modoTema === 'dark' ? '1px solid rgba(212, 175, 55, 0.2)' : '1px solid rgba(0,0,0,0.1)',
+          zIndex: theme.zIndex.appBar,
+          alignItems: 'center',
+          justifyContent: 'space-around',
+          px: 1,
+          pb: 'env(safe-area-inset-bottom, 0px)',
+        }}
+      >
+        {/* Início */}
+        <Box
+          component={RouterLink}
+          to="/inicio"
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minWidth: 54,
+            minHeight: 48,
+            textDecoration: 'none',
+            color: location.pathname === '/inicio' ? (modoTema === 'dark' ? '#D4AF37' : '#B8860B') : theme.palette.text.secondary,
+            transition: 'all 0.2s',
+          }}
+        >
+          <LodgeIcon active={location.pathname === '/inicio'} sx={{ height: 22, width: 'auto' }} />
+          <Typography sx={{ fontSize: '0.65rem', mt: 0.5, fontWeight: location.pathname === '/inicio' ? 700 : 500 }}>
+            Início
+          </Typography>
+        </Box>
+
+        {/* Obreiros */}
+        <Box
+          component={RouterLink}
+          to="/obreiros"
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minWidth: 54,
+            minHeight: 48,
+            textDecoration: 'none',
+            color: location.pathname === '/obreiros' ? (modoTema === 'dark' ? '#D4AF37' : '#B8860B') : theme.palette.text.secondary,
+            transition: 'all 0.2s',
+          }}
+        >
+          <Box component="img" src={SecretariaSvg} alt="Obreiros" sx={{ height: 22, width: 'auto', filter: location.pathname === '/obreiros' ? 'drop-shadow(0px 0px 6px rgba(212, 175, 55, 0.8))' : 'none' }} />
+          <Typography sx={{ fontSize: '0.65rem', mt: 0.5, fontWeight: location.pathname === '/obreiros' ? 700 : 500 }}>
+            Obreiros
+          </Typography>
+        </Box>
+
+        {/* Sessões */}
+        <Box
+          component={RouterLink}
+          to="/sessoes"
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minWidth: 54,
+            minHeight: 48,
+            textDecoration: 'none',
+            color: location.pathname === '/sessoes' ? (modoTema === 'dark' ? '#D4AF37' : '#B8860B') : theme.palette.text.secondary,
+            transition: 'all 0.2s',
+          }}
+        >
+          <Box component="img" src={ChancelariaSvg} alt="Sessões" sx={{ height: 22, width: 'auto', filter: location.pathname === '/sessoes' ? 'drop-shadow(0px 0px 6px rgba(212, 175, 55, 0.8))' : 'none' }} />
+          <Typography sx={{ fontSize: '0.65rem', mt: 0.5, fontWeight: location.pathname === '/sessoes' ? 700 : 500 }}>
+            Sessões
+          </Typography>
+        </Box>
+
+        {/* Meu Cadastro */}
+        <Box
+          component={RouterLink}
+          to="/meu-cadastro"
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minWidth: 54,
+            minHeight: 48,
+            textDecoration: 'none',
+            color: location.pathname === '/meu-cadastro' ? (modoTema === 'dark' ? '#D4AF37' : '#B8860B') : theme.palette.text.secondary,
+            transition: 'all 0.2s',
+          }}
+        >
+          <MemberPanelIcon active={location.pathname === '/meu-cadastro'} sx={{ height: 22, width: 'auto' }} />
+          <Typography sx={{ fontSize: '0.65rem', mt: 0.5, fontWeight: location.pathname === '/meu-cadastro' ? 700 : 500 }}>
+            Cadastro
+          </Typography>
+        </Box>
+
+        {/* Mais / Gaveta */}
+        <Box
+          onClick={() => setMobileOpen(true)}
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minWidth: 54,
+            minHeight: 48,
+            cursor: 'pointer',
+            color: mobileOpen ? (modoTema === 'dark' ? '#D4AF37' : '#B8860B') : theme.palette.text.secondary,
+            transition: 'all 0.2s',
+          }}
+        >
+          <MenuIcon sx={{ fontSize: 24 }} />
+          <Typography sx={{ fontSize: '0.65rem', mt: 0.5, fontWeight: 500 }}>
+            Mais
+          </Typography>
         </Box>
       </Box>
 
