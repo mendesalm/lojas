@@ -128,11 +128,24 @@ class LojaDadosUpdate(BaseModel):
 class LojaBuscaItem(BaseModel):
     id: int
     nome: str
+    nome_loja: Optional[str] = None
     numero: Optional[str] = None
     numero_loja: Optional[str] = None
     cidade: Optional[str] = ""
+    estado: Optional[str] = ""
     potencia: Optional[str] = ""
     rito: Optional[str] = ""
+    logradouro: Optional[str] = None
+    numero_endereco: Optional[str] = None
+    bairro: Optional[str] = None
+    cep: Optional[str] = None
+    email: Optional[str] = None
+    telefone: Optional[str] = None
+    site: Optional[str] = None
+    cnpj: Optional[str] = None
+    dia_sessao: Optional[str] = None
+    periodicidade: Optional[str] = None
+    horario_sessao: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -291,40 +291,83 @@ def listar_mandatos_loja(
     return lista
 
 
-def verificar_status_vm_lote(db: Session, ids: List[int]) -> dict[int, Optional[str]]:
-    """Verifica e retorna o nome do Venerável Mestre ativo para um lote de IDs de Lojas."""
+def verificar_status_vm_lote(db: Session, ids: List[int]) -> dict:
+    """Verifica e retorna o nome do Venerável Mestre ativo para um lote de IDs ou números de Lojas."""
     if not ids:
         return {}
 
     hoje = date.today()
+    ids_validos = [i for i in ids if isinstance(i, int)]
+    if not ids_validos:
+        return {}
+    ids_str = [str(i) for i in ids_validos]
+
+    lojas = (
+        db.query(Loja)
+        .filter(or_(Loja.id.in_(ids_validos), Loja.numero_loja.in_(ids_str)))
+        .all()
+    )
+    if not lojas:
+        return {loja_id: None for loja_id in ids}
+
+    lojas_ids = [l.id for l in lojas]
+
     resultados = (
         db.query(Mandato.loja_id, Obreiro.nome_completo)
         .join(Obreiro, Mandato.obreiro_id == Obreiro.id)
         .filter(
-            Mandato.loja_id.in_(ids),
+            Mandato.loja_id.in_(lojas_ids),
             Mandato.cargo_id == CARGO_ID_VENERAVEL_MESTRE,
             or_(Mandato.data_fim.is_(None), Mandato.data_fim >= hoje),
         )
         .all()
     )
 
-    lojas_com_vm = {row.loja_id: row.nome_completo for row in resultados}
-    return {loja_id: lojas_com_vm.get(loja_id) for loja_id in ids}
+    vm_por_loja_id = {row.loja_id: row.nome_completo for row in resultados}
+
+    retorno = {}
+    for l in lojas:
+        vm = vm_por_loja_id.get(l.id)
+        retorno[l.id] = vm
+        retorno[str(l.id)] = vm
+        if l.numero_loja:
+            retorno[str(l.numero_loja)] = vm
+            if l.numero_loja.isdigit():
+                retorno[int(l.numero_loja)] = vm
+
+    for req_id in ids:
+        if req_id not in retorno:
+            retorno[req_id] = None
+
+    return retorno
 
 
 def obter_veneraveis_elegiveis_lote(db: Session, ids: List[int]) -> List[dict]:
-    """Retorna os Veneráveis Mestres em exercício das lojas informadas."""
+    """Retorna os Veneráveis Mestres em exercício das lojas informadas (por id ou numero_loja)."""
     if not ids:
         return []
 
     hoje = date.today()
-    from models.models import Loja
+    ids_validos = [i for i in ids if isinstance(i, int)]
+    if not ids_validos:
+        return []
+    ids_str = [str(i) for i in ids_validos]
+
+    lojas = (
+        db.query(Loja)
+        .filter(or_(Loja.id.in_(ids_validos), Loja.numero_loja.in_(ids_str)))
+        .all()
+    )
+    if not lojas:
+        return []
+    lojas_ids = [l.id for l in lojas]
+
     mandatos = (
         db.query(Mandato, Obreiro, Loja)
         .join(Obreiro, Mandato.obreiro_id == Obreiro.id)
         .join(Loja, Mandato.loja_id == Loja.id)
         .filter(
-            Mandato.loja_id.in_(ids),
+            Mandato.loja_id.in_(lojas_ids),
             Mandato.cargo_id == CARGO_ID_VENERAVEL_MESTRE,
             or_(Mandato.data_fim.is_(None), Mandato.data_fim >= hoje),
         )

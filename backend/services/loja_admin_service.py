@@ -180,31 +180,46 @@ def buscar_lojas_termo(db: Session, termo: str, limite: int = 20) -> List[LojaBu
 
 
 def buscar_lojas_por_ids(db: Session, ids: List[int]) -> List[LojaBuscaItem]:
-    """Busca detalhes de múltiplas lojas por lista de IDs."""
+    """Busca detalhes de múltiplas lojas por lista de IDs ou números maçônicos."""
     if not ids:
         return []
     ids_validos = [i for i in ids if isinstance(i, int)]
     if not ids_validos:
         return []
+    ids_str = [str(i) for i in ids_validos]
     lojas = (
         db.query(Loja)
         .options(joinedload(Loja.potencia))
-        .filter(Loja.id.in_(ids_validos))
+        .filter(or_(Loja.id.in_(ids_validos), Loja.numero_loja.in_(ids_str)))
         .all()
     )
     resultado = []
     for l in lojas:
         rito_str = l.rito.value if hasattr(l.rito, "value") else str(l.rito or "")
         pot_str = l.potencia.sigla if (l.potencia and l.potencia.sigla) else (l.potencia.nome if l.potencia else "")
+        num_str = str(l.numero_loja) if l.numero_loja else (str(l.numero) if l.numero else None)
         resultado.append(
             LojaBuscaItem(
                 id=l.id,
                 nome=l.nome_loja,
-                numero=str(l.numero_loja) if l.numero_loja else None,
-                numero_loja=str(l.numero_loja) if l.numero_loja else None,
+                nome_loja=l.nome_loja,
+                numero=num_str,
+                numero_loja=num_str,
                 cidade=l.cidade or "",
+                estado=l.estado or "",
                 potencia=pot_str,
                 rito=rito_str,
+                logradouro=l.logradouro,
+                numero_endereco=l.numero,
+                bairro=l.bairro,
+                cep=l.cep,
+                email=l.email,
+                telefone=l.telefone,
+                site=l.site,
+                cnpj=l.cnpj,
+                dia_sessao=l.dia_sessao,
+                periodicidade=getattr(l, "periodicidade", None),
+                horario_sessao=str(l.horario_sessao) if getattr(l, "horario_sessao", None) else None,
             )
         )
     return resultado
