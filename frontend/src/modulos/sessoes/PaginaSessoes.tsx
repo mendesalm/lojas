@@ -1,4 +1,3 @@
-// EM CONFORMIDADE COM AS REGRAS DE OURO DO E-SIGMA
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -29,6 +28,7 @@ import {
   ListItemText,
   Divider,
   Paper,
+  Fab,
   useTheme,
   alpha
 } from '@mui/material';
@@ -38,9 +38,13 @@ import {
   PlayArrow as StartIcon,
   Stop as StopIcon,
   HowToReg as PersonCheckIcon,
-  CheckCircle as PresentIcon
+  CheckCircle as PresentIcon,
+  CalendarMonth as CalendarMonthIcon,
+  Download as DownloadIcon,
+  AccessTime as AccessTimeIcon
 } from '@mui/icons-material';
 import { useAuth, clienteHttp, extrairMensagemErro } from '@/compartilhado/contextos/AuthContext';
+import { gerarLinkGoogleCalendar, baixarArquivoIcs } from '@/compartilhado/utilitarios/calendarioExport';
 
 export const PaginaSessoes: React.FC = () => {
   const { lojaAtivaId } = useAuth();
@@ -311,7 +315,182 @@ export const PaginaSessoes: React.FC = () => {
         </Box>
       </Paper>
 
-      {/* Tabela de Sessões no Padrão Canônico SiGMa (Floating Pill Rows) */}
+      {/* Visualização Mobile: Cards Touch-Native Empilhados */}
+      <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', gap: 2, mt: 2 }}>
+        {carregando ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+            <CircularProgress color="primary" />
+          </Box>
+        ) : sessoesFiltradas.length === 0 ? (
+          <Paper sx={{ p: 4, textAlign: 'center', borderRadius: '16px', bgcolor: theme.palette.background.paper }}>
+            <Typography variant="body1" sx={{ color: 'text.secondary', fontWeight: 600 }}>
+              Nenhuma sessão encontrada.
+            </Typography>
+          </Paper>
+        ) : (
+          sessoesFiltradas.map((s) => {
+            const dataObj = new Date(s.data_sessao);
+            const diaNum = dataObj.toLocaleDateString('pt-BR', { day: '2-digit' });
+            const mesCurto = dataObj.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '').toUpperCase();
+            const diaSemana = dataObj.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '').toUpperCase();
+
+            return (
+              <Paper
+                key={s.id}
+                elevation={2}
+                sx={{
+                  p: 2,
+                  borderRadius: '16px',
+                  backgroundColor: theme.palette.background.paper,
+                  border: `1px solid ${theme.palette.divider}`,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 1.5,
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    borderColor: 'primary.main',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.3)'
+                  }
+                }}
+              >
+                {/* Header do Card com Data e Status */}
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Box
+                      sx={{
+                        width: 50,
+                        height: 50,
+                        borderRadius: '12px',
+                        bgcolor: alpha(theme.palette.primary.main, 0.1),
+                        border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}
+                    >
+                      <Typography sx={{ fontSize: '0.65rem', fontWeight: 700, color: 'text.secondary', lineHeight: 1 }}>
+                        {mesCurto}
+                      </Typography>
+                      <Typography sx={{ fontSize: '1.2rem', fontWeight: 800, color: 'primary.main', lineHeight: 1, my: 0.2 }}>
+                        {diaNum}
+                      </Typography>
+                      <Typography sx={{ fontSize: '0.6rem', fontWeight: 600, color: 'text.secondary', lineHeight: 1 }}>
+                        {diaSemana}
+                      </Typography>
+                    </Box>
+
+                    <Box>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'text.primary', lineHeight: 1.2 }}>
+                        {s.titulo}
+                      </Typography>
+                      {s.numero_sessao && (
+                        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+                          Sessão nº {s.numero_sessao}
+                        </Typography>
+                      )}
+                    </Box>
+                  </Box>
+
+                  <Box>
+                    {obterChipStatus(s.status)}
+                  </Box>
+                </Box>
+
+                {/* Linha com Tipo, Horário e Presentes */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap', pt: 0.5, borderTop: `1px solid ${alpha(theme.palette.divider, 0.5)}` }}>
+                  <Chip
+                    label={`${s.tipo} (${s.subtipo || 'Regular'})`}
+                    size="small"
+                    sx={{ height: 22, fontSize: '0.7rem', fontWeight: 600 }}
+                  />
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary', fontSize: '0.75rem' }}>
+                    <AccessTimeIcon sx={{ fontSize: 15 }} />
+                    <Typography variant="caption">{s.hora_inicio || '20:00'}</Typography>
+                  </Box>
+                  <Chip
+                    label={`${s.total_presentes || 0} Irmãos`}
+                    size="small"
+                    icon={<PresentIcon sx={{ fontSize: 14 }} />}
+                    sx={{ height: 22, fontSize: '0.7rem', bgcolor: alpha(theme.palette.divider, 0.2) }}
+                  />
+                </Box>
+
+                {/* Ações do Card */}
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, pt: 1, borderTop: `1px solid ${alpha(theme.palette.divider, 0.5)}` }}>
+                  {/* Botões de Calendário */}
+                  <Box sx={{ display: 'flex', gap: 0.8 }}>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      href={gerarLinkGoogleCalendar({
+                        titulo: s.titulo,
+                        descricao: `Sessão Maçônica ${s.tipo} (${s.subtipo || 'Regular'})\n${s.pauta || ''}`,
+                        local: 'Templo Maçônico',
+                        dataInicio: `${s.data_sessao}T${s.hora_inicio || '20:00'}:00`,
+                        diaInteiro: false
+                      })}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      sx={{ fontSize: '0.65rem', py: 0.4, px: 1, borderRadius: 1.5, borderColor: theme.palette.divider, color: 'text.secondary' }}
+                    >
+                      Google
+                    </Button>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => {
+                        baixarArquivoIcs({
+                          titulo: s.titulo,
+                          descricao: `Sessão Maçônica ${s.tipo} (${s.subtipo || 'Regular'})\n${s.pauta || ''}`,
+                          local: 'Templo Maçônico',
+                          dataInicio: `${s.data_sessao}T${s.hora_inicio || '20:00'}:00`,
+                          diaInteiro: false
+                        });
+                      }}
+                      sx={{ fontSize: '0.65rem', py: 0.4, px: 1, borderRadius: 1.5, borderColor: theme.palette.divider, color: 'text.secondary' }}
+                    >
+                      iCal
+                    </Button>
+                  </Box>
+
+                  {/* Ações de Gestão e Detalhes */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    {s.status === 'AGENDADA' && (
+                      <IconButton color="success" size="small" onClick={() => alterarStatusSessao(s.id, 'EM_ANDAMENTO')} title="Iniciar Sessão">
+                        <StartIcon fontSize="small" />
+                      </IconButton>
+                    )}
+                    {s.status === 'EM_ANDAMENTO' && (
+                      <IconButton color="error" size="small" onClick={() => alterarStatusSessao(s.id, 'ENCERRADA')} title="Encerrar Sessão">
+                        <StopIcon fontSize="small" />
+                      </IconButton>
+                    )}
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={() => abrirDetalheSessao(s.id)}
+                      sx={{
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        textTransform: 'none',
+                        borderRadius: '8px',
+                        px: 1.5,
+                        py: 0.5
+                      }}
+                    >
+                      Presenças
+                    </Button>
+                  </Box>
+                </Box>
+              </Paper>
+            );
+          })
+        )}
+      </Box>
+
+      {/* Tabela de Sessões no Padrão Canônico SiGMa (Floating Pill Rows) - Desktop */}
       <Paper
         elevation={3}
         sx={{
@@ -319,7 +498,8 @@ export const PaginaSessoes: React.FC = () => {
           backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05))',
           borderRadius: '16px',
           p: 3,
-          mt: 2
+          mt: 2,
+          display: { xs: 'none', md: 'block' }
         }}
       >
         <TableContainer component={Box} sx={{ backgroundColor: 'transparent', overflowX: 'auto' }}>
@@ -502,6 +682,48 @@ export const PaginaSessoes: React.FC = () => {
                 {obterChipStatus(sessaoSelecionada.status)}
               </Box>
 
+              {/* Barra de Sincronização do Calendário no Modal */}
+              <Box sx={{ p: 1.5, mb: 2, bgcolor: alpha(theme.palette.primary.main, 0.08), border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`, borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary', display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CalendarMonthIcon sx={{ fontSize: 18, color: 'primary.main' }} />
+                  Sincronizar no seu celular:
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    href={gerarLinkGoogleCalendar({
+                      titulo: sessaoSelecionada.titulo,
+                      descricao: `Sessão Maçônica ${sessaoSelecionada.tipo} (${sessaoSelecionada.subtipo || 'Regular'})\n${sessaoSelecionada.pauta || ''}`,
+                      local: 'Templo Maçônico',
+                      dataInicio: `${sessaoSelecionada.data_sessao}T${sessaoSelecionada.hora_inicio || '20:00'}:00`,
+                      diaInteiro: false
+                    })}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    sx={{ fontSize: '0.72rem', textTransform: 'none', borderRadius: 1.5 }}
+                  >
+                    Google Agenda
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => {
+                      baixarArquivoIcs({
+                        titulo: sessaoSelecionada.titulo,
+                        descricao: `Sessão Maçônica ${sessaoSelecionada.tipo} (${sessaoSelecionada.subtipo || 'Regular'})\n${sessaoSelecionada.pauta || ''}`,
+                        local: 'Templo Maçônico',
+                        dataInicio: `${sessaoSelecionada.data_sessao}T${sessaoSelecionada.hora_inicio || '20:00'}:00`,
+                        diaInteiro: false
+                      });
+                    }}
+                    sx={{ fontSize: '0.72rem', textTransform: 'none', borderRadius: 1.5 }}
+                  >
+                    Apple / iCal (.ics)
+                  </Button>
+                </Box>
+              </Box>
+
               {sessaoSelecionada.pauta && (
                 <Box sx={{ p: 2, bgcolor: 'action.hover', borderRadius: 2, mb: 3 }}>
                   <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.secondary', display: 'block', mb: 0.5 }}>
@@ -640,6 +862,28 @@ export const PaginaSessoes: React.FC = () => {
           </DialogActions>
         </form>
       </Dialog>
+
+      {/* Floating Action Button (FAB) Mobile para Nova Sessão */}
+      <Fab
+        color="primary"
+        aria-label="Nova Sessão"
+        onClick={() => setModalAgendamentoAberto(true)}
+        sx={{
+          position: 'fixed',
+          bottom: { xs: 80, sm: 28 },
+          right: 20,
+          display: { xs: 'flex', md: 'none' },
+          zIndex: 1200,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+          background: 'linear-gradient(180deg, #DDB96B 0%, #B8862D 100%)',
+          color: '#1A1D23',
+          '&:hover': {
+            background: 'linear-gradient(180deg, #DDB96B 0%, #B8862D 100%)',
+          }
+        }}
+      >
+        <AddIcon sx={{ fontSize: 28 }} />
+      </Fab>
     </Box>
   );
 };

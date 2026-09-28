@@ -67,6 +67,7 @@ import { useAuth } from '@/compartilhado/contextos/AuthContext';
 import { obterUrlLojasBase } from '@/compartilhado/servicos/configuracaoApi';
 import { useTheme } from '@mui/material/styles';
 import { normalizeEventType, EVENT_COLORS, ACCENT_COLOR } from './constants/LodgeDashboardConstants';
+import { gerarLinkGoogleCalendar, baixarArquivoIcs } from '@/compartilhado/utilitarios/calendarioExport';
 
 export const PaginaInicio: React.FC = () => {
     const { usuario, lojaAtivaId } = useAuth();
@@ -392,18 +393,71 @@ export const PaginaInicio: React.FC = () => {
                                 return (
                                     <ListItem key={idx} sx={{ px: 0, borderBottom: `1px solid ${theme.palette.divider}`, display: 'flex', alignItems: 'flex-start' }}>
                                         <IconComponent sx={{ color: color, fontSize: 18, mr: 1.5, mt: 0.5, flexShrink: 0 }} />
-                                        <ListItemText
-                                            primary={
-                                                <Typography sx={{ color: theme.palette.text.primary, fontWeight: 500 }}>
-                                                    {event.title}
-                                                </Typography>
-                                            }
-                                            secondary={
-                                                <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.75rem', fontStyle: 'italic' }}>
-                                                    {normalizedType}
-                                                </Typography>
-                                            }
-                                        />
+                                        <Box sx={{ flexGrow: 1 }}>
+                                            <ListItemText
+                                                primary={
+                                                    <Typography sx={{ color: theme.palette.text.primary, fontWeight: 500 }}>
+                                                        {event.title}
+                                                    </Typography>
+                                                }
+                                                secondary={
+                                                    <Typography sx={{ color: theme.palette.text.secondary, fontSize: '0.75rem', fontStyle: 'italic' }}>
+                                                        {normalizedType}
+                                                    </Typography>
+                                                }
+                                            />
+                                            {/* Sincronização direta com calendário do celular */}
+                                            <Box sx={{ display: 'flex', gap: 1, mt: 1, flexWrap: 'wrap' }}>
+                                                <Button
+                                                    size="small"
+                                                    variant="outlined"
+                                                    href={gerarLinkGoogleCalendar({
+                                                        titulo: event.title,
+                                                        descricao: `${normalizedType} - ${stats?.lodge_info?.name || 'Loja Maçônica'}`,
+                                                        local: stats?.lodge_info?.address || 'Templo Maçônico',
+                                                        dataInicio: event.full_date || `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(event.date).padStart(2, '0')}`,
+                                                        diaInteiro: event.type !== 'sessao'
+                                                    })}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    sx={{
+                                                        fontSize: '0.65rem',
+                                                        py: 0.25,
+                                                        px: 1,
+                                                        borderRadius: 1.5,
+                                                        borderColor: theme.palette.divider,
+                                                        color: theme.palette.text.secondary,
+                                                        '&:hover': { borderColor: ACCENT_COLOR, color: ACCENT_COLOR }
+                                                    }}
+                                                >
+                                                    Google Agenda
+                                                </Button>
+                                                <Button
+                                                    size="small"
+                                                    variant="outlined"
+                                                    onClick={() => {
+                                                        baixarArquivoIcs({
+                                                            titulo: event.title,
+                                                            descricao: `${normalizedType} - ${stats?.lodge_info?.name || 'Loja Maçônica'}`,
+                                                            local: stats?.lodge_info?.address || 'Templo Maçônico',
+                                                            dataInicio: event.full_date || `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(event.date).padStart(2, '0')}`,
+                                                            diaInteiro: event.type !== 'sessao'
+                                                        });
+                                                    }}
+                                                    sx={{
+                                                        fontSize: '0.65rem',
+                                                        py: 0.25,
+                                                        px: 1,
+                                                        borderRadius: 1.5,
+                                                        borderColor: theme.palette.divider,
+                                                        color: theme.palette.text.secondary,
+                                                        '&:hover': { borderColor: ACCENT_COLOR, color: ACCENT_COLOR }
+                                                    }}
+                                                >
+                                                    Apple / iCal (.ics)
+                                                </Button>
+                                            </Box>
+                                        </Box>
                                     </ListItem>
                                 );
                             })}

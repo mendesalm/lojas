@@ -1,7 +1,17 @@
-import React, { useMemo } from 'react';
-import { Card, CardContent, Typography, Box, Button, Chip } from '@mui/material';
+import React, { useState, useMemo } from 'react';
+import { Card, CardContent, Typography, Box, Button, Chip, IconButton } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { ArrowBackIosNew, ArrowForwardIos, Event as EventIcon, Cake as CakeIcon, Architecture as ArchitectureIcon } from '@mui/icons-material';
+import {
+  ArrowBackIosNew,
+  ArrowForwardIos,
+  Event as EventIcon,
+  Cake as CakeIcon,
+  Architecture as ArchitectureIcon,
+  ViewList as ViewListIcon,
+  CalendarMonth as CalendarMonthIcon,
+  ChevronRight as ChevronRightIcon,
+  AllInclusive as WeddingIcon
+} from '@mui/icons-material';
 import type { CalendarEvent } from '../services/dashboardService';
 import { EVENT_COLORS, normalizeEventType, ACCENT_COLOR } from '../constants/LodgeDashboardConstants';
 
@@ -41,6 +51,16 @@ const LodgeSessionsWidget: React.FC<LodgeSessionsWidgetProps> = ({
   canManageLodge
 }) => {
   const theme = useTheme();
+
+  // Alternador de visão responsivo: mobile inicia em lista para máximo conforto ergonômico
+  const [modoVisualizacao, setModoVisualizacao] = useState<'lista' | 'calendario'>(() => {
+    return typeof window !== 'undefined' && window.innerWidth < 768 ? 'lista' : 'calendario';
+  });
+
+  // Lista de eventos ordenados por dia para visão em feed
+  const eventosOrdenados = useMemo(() => {
+    return [...filteredEvents].sort((a, b) => a.date - b.date);
+  }, [filteredEvents]);
 
   const renderCalendarDays = useMemo(() => {
     const days = [];
@@ -133,16 +153,58 @@ const LodgeSessionsWidget: React.FC<LodgeSessionsWidgetProps> = ({
       overflow: 'hidden'
     }}>
       <CardContent sx={{ p: 0, display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-        <Box sx={{ pt: { xs: 1.5, md: 2 }, px: { xs: 1.5, md: 2 }, pb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <Box sx={{ pt: { xs: 1.5, md: 2 }, px: { xs: 1.5, md: 2 }, pb: 1, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'flex-start' }, gap: 1.5 }}>
           <Box>
-            <Typography variant="h3" sx={{ fontFamily: '"Inter", sans-serif', fontWeight: 800, color: '#C49A45', letterSpacing: -1, mb: 0 }}>
-              {currentDate.toLocaleDateString('pt-BR', { month: 'long' })}
-            </Typography>
-            <Typography variant="h6" sx={{ fontFamily: '"Inter", sans-serif', color: theme.palette.text.secondary, fontWeight: 300, letterSpacing: 1, mb: 1.5 }}>
-              {currentDate.getFullYear()}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
+              <Box>
+                <Typography variant="h3" sx={{ fontFamily: '"Inter", sans-serif', fontWeight: 800, color: '#C49A45', letterSpacing: -1, mb: 0 }}>
+                  {currentDate.toLocaleDateString('pt-BR', { month: 'long' })}
+                </Typography>
+                <Typography variant="h6" sx={{ fontFamily: '"Inter", sans-serif', color: theme.palette.text.secondary, fontWeight: 300, letterSpacing: 1, mb: 1 }}>
+                  {currentDate.getFullYear()}
+                </Typography>
+              </Box>
 
-            <Box sx={{ display: 'flex', gap: 1 }}>
+              {/* Alternador de Visão Lista / Mês */}
+              <Box sx={{ display: 'flex', bgcolor: theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.05)', p: 0.5, borderRadius: 2, border: `1px solid ${theme.palette.divider}` }}>
+                <Button
+                  size="small"
+                  onClick={() => setModoVisualizacao('lista')}
+                  sx={{
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    borderRadius: 1.5,
+                    px: 1.5,
+                    py: 0.5,
+                    color: modoVisualizacao === 'lista' ? '#1A1D23' : theme.palette.text.secondary,
+                    bgcolor: modoVisualizacao === 'lista' ? ACCENT_COLOR : 'transparent',
+                    '&:hover': { bgcolor: modoVisualizacao === 'lista' ? ACCENT_COLOR : 'transparent' }
+                  }}
+                  startIcon={<ViewListIcon sx={{ fontSize: 16 }} />}
+                >
+                  Lista
+                </Button>
+                <Button
+                  size="small"
+                  onClick={() => setModoVisualizacao('calendario')}
+                  sx={{
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    borderRadius: 1.5,
+                    px: 1.5,
+                    py: 0.5,
+                    color: modoVisualizacao === 'calendario' ? '#1A1D23' : theme.palette.text.secondary,
+                    bgcolor: modoVisualizacao === 'calendario' ? ACCENT_COLOR : 'transparent',
+                    '&:hover': { bgcolor: modoVisualizacao === 'calendario' ? ACCENT_COLOR : 'transparent' }
+                  }}
+                  startIcon={<CalendarMonthIcon sx={{ fontSize: 16 }} />}
+                >
+                  Mês
+                </Button>
+              </Box>
+            </Box>
+
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 0.5 }}>
               <Chip
                 label="Sessões"
                 icon={<Box sx={{ display: 'flex', alignItems: 'center' }}><EventIcon sx={{ fontSize: 16 }} /><ArchitectureIcon sx={{ fontSize: 16, ml: -0.5 }} /></Box>}
@@ -163,7 +225,8 @@ const LodgeSessionsWidget: React.FC<LodgeSessionsWidgetProps> = ({
               />
             </Box>
           </Box>
-          <Box sx={{ display: 'flex', gap: 1 }}>
+
+          <Box sx={{ display: 'flex', gap: 1, alignSelf: { xs: 'flex-end', sm: 'flex-start' } }}>
             <Button
               variant="outlined"
               onClick={onPrevMonth}
@@ -188,17 +251,108 @@ const LodgeSessionsWidget: React.FC<LodgeSessionsWidgetProps> = ({
           </Box>
         </Box>
 
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', bgcolor: theme.palette.background.paper, py: 1, borderTop: `1px solid ${theme.palette.divider}`, borderBottom: `1px solid ${theme.palette.divider}` }}>
-          {['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'].map(d => (
-            <Typography key={d} variant="caption" sx={{ textAlign: 'center', color: ACCENT_COLOR, fontWeight: 800, letterSpacing: 2 }}>
-              {d}
-            </Typography>
-          ))}
-        </Box>
+        {modoVisualizacao === 'lista' ? (
+          <Box sx={{ flexGrow: 1, overflowY: 'auto', p: { xs: 1.5, md: 2 }, display: 'flex', flexDirection: 'column', gap: 1.5, maxHeight: '520px' }}>
+            {eventosOrdenados.length === 0 ? (
+              <Box sx={{ p: 4, textAlign: 'center', color: theme.palette.text.secondary }}>
+                <EventIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
+                <Typography variant="body1" sx={{ fontWeight: 600 }}>Nenhum evento neste mês</Typography>
+                <Typography variant="caption">Ajuste os filtros de Sessões, Aniversários ou Maçônicos.</Typography>
+              </Box>
+            ) : (
+              eventosOrdenados.map((event, idx) => {
+                const dataObj = new Date(currentDate.getFullYear(), currentDate.getMonth(), event.date);
+                const diaSemana = dataObj.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '').toUpperCase();
+                const corBadge = event.type === 'sessao' ? '#5B8FB9' : (EVENT_COLORS[event.type] || '#5B8FB9');
 
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gridAutoRows: '1fr', flexGrow: 1, bgcolor: theme.palette.background.paper }}>
-          {renderCalendarDays}
-        </Box>
+                return (
+                  <Box
+                    key={idx}
+                    onClick={() => onDayClick(event.date)}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      p: 1.5,
+                      borderRadius: '12px',
+                      bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                      border: `1px solid ${theme.palette.divider}`,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)',
+                        borderColor: ACCENT_COLOR,
+                        transform: 'translateY(-1px)'
+                      }
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      {/* Badge do Dia */}
+                      <Box
+                        sx={{
+                          width: 48,
+                          height: 48,
+                          borderRadius: '10px',
+                          bgcolor: theme.palette.mode === 'dark' ? '#0d131f' : '#f0f4f8',
+                          border: `1px solid ${theme.palette.divider}`,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0
+                        }}
+                      >
+                        <Typography sx={{ fontSize: '1.1rem', fontWeight: 800, color: ACCENT_COLOR, lineHeight: 1 }}>
+                          {event.date.toString().padStart(2, '0')}
+                        </Typography>
+                        <Typography sx={{ fontSize: '0.65rem', fontWeight: 600, color: theme.palette.text.secondary }}>
+                          {diaSemana}
+                        </Typography>
+                      </Box>
+
+                      {/* Informações do Evento */}
+                      <Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                          <Chip
+                            label={normalizeEventType(event.title || event.type)}
+                            size="small"
+                            sx={{
+                              height: 20,
+                              fontSize: '0.65rem',
+                              fontWeight: 700,
+                              bgcolor: corBadge,
+                              color: '#fff',
+                              borderRadius: 4
+                            }}
+                          />
+                        </Box>
+                        <Typography variant="body2" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
+                          {event.title || 'Evento da Loja'}
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    <ChevronRightIcon sx={{ color: theme.palette.text.secondary }} />
+                  </Box>
+                );
+              })
+            )}
+          </Box>
+        ) : (
+          <>
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', bgcolor: theme.palette.background.paper, py: 1, borderTop: `1px solid ${theme.palette.divider}`, borderBottom: `1px solid ${theme.palette.divider}` }}>
+              {['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'].map(d => (
+                <Typography key={d} variant="caption" sx={{ textAlign: 'center', color: ACCENT_COLOR, fontWeight: 800, letterSpacing: 2 }}>
+                  {d}
+                </Typography>
+              ))}
+            </Box>
+
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gridAutoRows: '1fr', flexGrow: 1, bgcolor: theme.palette.background.paper }}>
+              {renderCalendarDays}
+            </Box>
+          </>
+        )}
         
         {canManageLodge && (
           <Box sx={{ display: 'flex', gap: 1.5, p: 2.5, pt: 2, justifyContent: 'center', bgcolor: theme.palette.background.paper }}>
