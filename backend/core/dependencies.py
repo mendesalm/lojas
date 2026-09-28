@@ -14,7 +14,7 @@ from typing import Optional
 from fastapi import Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
-from core.auth_esigma import UsuarioEsigma, obter_usuario_esigma
+from core.auth_esigma import UsuarioEsigma, obter_usuario_esigma, obter_usuario_esigma_opcional
 from core.constants import (
     CARGO_ID_VENERAVEL_MESTRE,
     CARGO_ID_SECRETARIO,
@@ -56,6 +56,18 @@ def get_usuario_e_obreiro(
 ) -> tuple[UsuarioEsigma, Optional[Obreiro]]:
     """Dependência de base: devolve a identidade e-Sigma já validada junto
     com o Obreiro correspondente em `lojas_db`, quando existir."""
+    obreiro = _resolver_obreiro_por_identificador(db, usuario)
+    return usuario, obreiro
+
+
+def get_usuario_e_obreiro_opcional(
+    usuario: Optional[UsuarioEsigma] = Depends(obter_usuario_esigma_opcional),
+    db: Session = Depends(get_db),
+) -> tuple[Optional[UsuarioEsigma], Optional[Obreiro]]:
+    """Dependência opcional: devolve a identidade e-Sigma validada se houver token,
+    ou (None, None) caso a requisição use chave de serviço inter-módulos."""
+    if not usuario:
+        return None, None
     obreiro = _resolver_obreiro_por_identificador(db, usuario)
     return usuario, obreiro
 
@@ -138,12 +150,12 @@ def _verificar_acesso_servico_regional(
 
 def exigir_permissao_gestao_loja(
     loja_id: str,
-    contexto: tuple[UsuarioEsigma, Optional[Obreiro]] = Depends(get_usuario_e_obreiro),
+    contexto: tuple[Optional[UsuarioEsigma], Optional[Obreiro]] = Depends(get_usuario_e_obreiro_opcional),
     x_service_key: Optional[str] = Header(None, alias="X-Service-Key"),
     x_operador_papel: Optional[str] = Header(None, alias="X-Operador-Papel"),
     x_operador_loja_id: Optional[str] = Header(None, alias="X-Operador-Loja-Id"),
     db: Session = Depends(get_db),
-) -> tuple[UsuarioEsigma, Optional[Obreiro]]:
+) -> tuple[Optional[UsuarioEsigma], Optional[Obreiro]]:
     """
     Autoriza gestão institucional e cadastral da Loja (dados cadastrais, cargos, membros).
     Elegíveis:
@@ -159,6 +171,12 @@ def exigir_permissao_gestao_loja(
 
     if _verificar_acesso_servico_regional(x_service_key, x_operador_papel, x_operador_loja_id, loja_id_int):
         return contexto
+
+    if not usuario:
+        raise HTTPException(
+            status_code=401,
+            detail="Autenticação obrigatória para gerenciar dados da Loja.",
+        )
 
     if usuario.is_super_admin:
         return contexto
@@ -177,18 +195,24 @@ def exigir_permissao_gestao_loja(
 
 def exigir_vm_ou_webmaster_da_loja(
     loja_id: str,
-    contexto: tuple[UsuarioEsigma, Optional[Obreiro]] = Depends(get_usuario_e_obreiro),
+    contexto: tuple[Optional[UsuarioEsigma], Optional[Obreiro]] = Depends(get_usuario_e_obreiro_opcional),
     x_service_key: Optional[str] = Header(None, alias="X-Service-Key"),
     x_operador_papel: Optional[str] = Header(None, alias="X-Operador-Papel"),
     x_operador_loja_id: Optional[str] = Header(None, alias="X-Operador-Loja-Id"),
     db: Session = Depends(get_db),
-) -> tuple[UsuarioEsigma, Optional[Obreiro]]:
+) -> tuple[Optional[UsuarioEsigma], Optional[Obreiro]]:
     """Permite posse de cargos / transição de VM. Autoriza VM ativo, Webmaster, SuperAdmin ou Mesa Diretora Regional."""
     loja_id_int = resolver_loja_id_ou_404(db, loja_id)
     usuario, obreiro = contexto
 
     if _verificar_acesso_servico_regional(x_service_key, x_operador_papel, x_operador_loja_id, loja_id_int):
         return contexto
+
+    if not usuario:
+        raise HTTPException(
+            status_code=401,
+            detail="Autenticação obrigatória para gerenciar liderança da Loja.",
+        )
 
     if usuario.is_super_admin:
         return contexto
@@ -207,18 +231,24 @@ def exigir_vm_ou_webmaster_da_loja(
 
 def exigir_membro_ou_diretoria_da_loja(
     loja_id: str,
-    contexto: tuple[UsuarioEsigma, Optional[Obreiro]] = Depends(get_usuario_e_obreiro),
+    contexto: tuple[Optional[UsuarioEsigma], Optional[Obreiro]] = Depends(get_usuario_e_obreiro_opcional),
     x_service_key: Optional[str] = Header(None, alias="X-Service-Key"),
     x_operador_papel: Optional[str] = Header(None, alias="X-Operador-Papel"),
     x_operador_loja_id: Optional[str] = Header(None, alias="X-Operador-Loja-Id"),
     db: Session = Depends(get_db),
-) -> tuple[UsuarioEsigma, Optional[Obreiro]]:
+) -> tuple[Optional[UsuarioEsigma], Optional[Obreiro]]:
     """Garante que o usuário pertence à Loja (membro ativo), é Webmaster, SuperAdmin ou membro autorizado do Conselho Regional."""
     loja_id_int = resolver_loja_id_ou_404(db, loja_id)
     usuario, obreiro = contexto
 
     if _verificar_acesso_servico_regional(x_service_key, x_operador_papel, x_operador_loja_id, loja_id_int):
         return contexto
+
+    if not usuario:
+        raise HTTPException(
+            status_code=401,
+            detail="Autenticação obrigatória para acessar dados da Loja.",
+        )
 
     if usuario.is_super_admin:
         return contexto

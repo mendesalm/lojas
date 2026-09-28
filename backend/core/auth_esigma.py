@@ -160,6 +160,24 @@ def obter_usuario_esigma(
             if len(_cache_validacao) > 500:
                 expiradas = [k for k, v in _cache_validacao.items() if v[0] <= agora]
                 for k in expiradas:
-                    del _cache_validacao[k]
-
         return usuario_validado
+
+
+def obter_usuario_esigma_opcional(
+    authorization: Optional[str] = Header(
+        None,
+        description="Token Bearer emitido pelo e-Sigma no login do usuário (opcional para rotas inter-serviços com Service Key).",
+    ),
+) -> Optional[UsuarioEsigma]:
+    """
+    Dependência FastAPI variante de obter_usuario_esigma que não barra a
+    requisição caso o header Authorization esteja ausente ou seja inválido.
+    Permite que rotas autenticadas por X-Service-Key (como CoReVM -> Lojas)
+    sejam avaliadas sem erro 422 prematuro.
+    """
+    if not authorization:
+        return None
+    try:
+        return obter_usuario_esigma(authorization=authorization)
+    except HTTPException:
+        return None
