@@ -1,71 +1,112 @@
-# Documento de Handoff - Ecossistema Sigma / Lojas / CoReVM / Harmonia (28/09/2026)
-
-**Data de Atualização:** 28 de Setembro de 2026  
-**Status da Sessão:** 🟢 PWA e Capacitor Android configurados em todos os 4 módulos; Modernização Mobile First completa nos Calendários do CoReVM e Lojas; Correção de sobreposição e Menu Hambúrguer na Landing Page do e-Sigma; Blindagem definitiva de links de módulos contra localhost em ambiente mobile e produção.
-
----
-
-## 🎯 Contexto Consolidado da Sessão (28/09/2026)
-
-### 1. Fase 1: PWA Completo em Todos os Módulos
-- **Manifests e Ícones:** Configurados `manifest.json` com `display: standalone`, `theme_color: #070e1c` e ícones padronizados em `e-sigma`, `CoReVM`, `Lojas` e `Harmonia`.
-- **Service Workers Resilientes (`sw.js`):** Implementados Service Workers com estratégias de cache estático seguro (`stale-while-revalidate`), ignorando chamadas de API e autenticação.
-- **Hook de Instalação (`usePwaInstall`):** Captura do evento `beforeinstallprompt` com botões de instalação nos dashboards.
-
-### 2. Fase 2: Plataformas Nativas Capacitor Android
-- **Capacitor 8.5+ Configurado:** Projetos Android nativos criados e sincronizados para os 4 módulos:
-  - `e-sigma`: `com.esigma.hub`
-  - `CoReVM`: `com.esigma.corevm`
-  - `Lojas`: `com.esigma.lojas`
-  - `Harmonia`: `com.esigma.harmonia`
-- **Estilização Nativa Deep Blue:** `styles.xml` configurado com `windowBackground` em `#070E1C` e `statusBarColor` sem piscar tela branca.
-- **Scripts de Build e Sincronização:** Comandos `"cap:sync"` e `"cap:android"` adicionados aos `package.json`.
-
-### 3. Blindagem Definitiva de Links de Módulos (Fim do Bug de Localhost)
-- **Diagnóstico:** Em WebViews do Capacitor Android, `window.location.hostname` é avaliado como `'localhost'`. A lógica anterior acreditava que o usuário estava em desenvolvimento local e tentava abrir `http://localhost:5174` e `http://localhost:5175`.
-- **Solução:** `configuracaoAmbiente.ts` e `DashboardCliente.tsx` do `e-sigma` agora apontam **categoricamente** para os domínios de produção na nuvem (`https://core.e-sigma.app`, `https://lojas.e-sigma.app`, `https://harmonia.e-sigma.app`). O uso de portas locais exige agora a flag explícita `VITE_USAR_SATELITES_LOCAIS=true`.
-- **Cache Invalidação:** Versão do cache do PWA elevada para `v3` (`esigma-pwa-cache-v3`).
-
-### 4. Modernização Mobile First dos Calendários (CoReVM & Lojas)
-- **CoReVM (`PaginaCalendario.tsx`):**
-  - Alternador [ 📋 Lista | 📅 Mês ] no topo. Telas móveis (< 768px) iniciam automaticamente no modo **Lista**.
-  - Cards de eventos com badge de data destacada, tags coloridas por tipo maçônico e targets de toque ergonômicos (> 44px).
-  - Exportação direta para **Google Agenda** e download de arquivo **Apple Calendar / iCal (.ics)**.
-  - Floating Action Button (FAB) móvel dourado no canto inferior direito para criação de eventos.
-- **Lojas (`LodgeSessionsWidget.tsx`, `PaginaInicio.tsx`, `PaginaSessoes.tsx`):
-  - Alternador de visualização [ 📋 Lista | 📅 Mês ] no widget do painel principal.
-  - Cards empilhados touch-native no mobile na `PaginaSessoes.tsx`, eliminando a rolagem horizontal de 700px da tabela.
-  - Botões de exportação Google Agenda e iCal nas sessões e modal de detalhes do dia.
-  - FAB móvel flutuante (`+ Nova Sessão`) no alcance do polegar.
-
-### 5. Correção de Layout Mobile First na Landing Page (`e-sigma.app`)
-- **Fim da Sobreposição no Cabeçalho:** Criado menu hambúrguer com **Gaveta Lateral (*Drawer*) em Glassmorphism**, recolhendo a navegação em telas `< 900px` e eliminando a colisão com o botão de login.
-- **Botão "Entrar" Compacto:** Substituído o botão fixo de 170px por um botão responsivo touch-friendly com ícone de login.
-- **Hero Responsivo:** Padding superior com respiro de segurança (`pt: { xs: '84px', sm: '96px', md: '108px' }`), logo escalável (`130px - 220px`) e viewport dinâmica `100dvh`.
-- **Fim da Trava de Rolagem:** Desativado `scroll-snap: mandatory` em telas móveis (`scrollSnapType: { xs: 'none', md: 'y mandatory' }`) para rolagem contínua suave no celular.
+# Handoff — Módulo Lojas
+**Gerado em:** 2026-09-28T20:51:00-03:00  
+**Sessão:** Fix autenticação inter-serviços CoReVM → Lojas + normalização de RitoEnum
 
 ---
 
-## 🏛️ Definição de Arquitetura e Portas do Ecossistema
-- **`e-Sigma` (IdP & SaaS Hub)**: Porta `:8000`, Frontend `:5173`, Banco `esigma`. Domínio: `https://e-sigma.app`.
-- **`Lojas` (ERP das Oficinas)**: Porta `:8001`, Frontend `:5175`, Banco `lojas_db`. Domínio: `https://lojas.e-sigma.app`.
-- **`CoReVM` (Conselho Regional)**: Porta `:8003`, Frontend `:5174`, Banco `core_db`. Domínio: `https://core.e-sigma.app`.
-- **`Harmonia` (Música e Rituais)**: Porta `:8002`, Frontend `:5178`. Domínio: `https://harmonia.e-sigma.app`.
+## 1. Estado atual
+
+O módulo está **implantado na VPS** (`lojas.e-sigma.app`, porta 8001). Os commits desta sessão foram enviados e o GitHub Actions deve ter concluído o deploy.
 
 ---
 
-## 🚧 Status dos Repositórios no GitHub
-- **`e-sigma`**: Commit `57aac42` (main) enviado ao GitHub.
-- **`CoReVM`**: Commit `ddd8cdb` (main) enviado ao GitHub.
-- **`Lojas`**: Commit `a5dfd2a` (main) enviado ao GitHub.
-- **`Harmonia`**: Working tree limpo, sincronizado.
+## 2. O que foi feito nesta sessão
+
+### 2.1 Fix: chamadas inter-serviços sem `Authorization` causavam 422
+
+**Problema:** O CoReVM chama `PUT /api/v1/lojas/{id}` com header `X-Service-Key` e sem `Authorization`. A dependência `exigir_permissao_gestao_loja` usava `get_usuario_e_obreiro` (que exige Authorization obrigatório) → retornava 422, tratado como 404 pelo CoReVM.
+
+**Arquivos alterados:**
+
+- **`backend/core/auth_esigma.py`**  
+  Adicionada `obter_usuario_esigma_opcional`: `authorization: Optional[str] = Header(None)` — retorna `None` em vez de 422 quando não há token.
+
+- **`backend/core/dependencies.py`**  
+  - Adicionada `get_usuario_e_obreiro_opcional`  
+  - `exigir_permissao_gestao_loja`, `exigir_vm_ou_webmaster_da_loja`, `exigir_membro_ou_diretoria_da_loja` migradas para usar `get_usuario_e_obreiro_opcional`  
+  - Verificam `_verificar_acesso_servico_regional(x_service_key, ...)` antes de exigir `Authorization`
+
+### 2.2 Fix: `RitoEnum` — 500 ao atualizar rito com valor não canônico
+
+**Problema:** `atualizar_dados_loja` em `loja_admin_service.py` fazia:
+```python
+try:
+    loja.rito = RitoEnum(rito_val)
+except Exception:
+    loja.rito = rito_val   # ← atribui string pura ao SQLAlchemyEnum → 500 no commit
+```
+
+**Arquivo alterado:**
+
+- **`backend/services/loja_admin_service.py`**  
+  Substituído bloco problemático por mapa de normalização robusto `_mapa_rito` que converte variações do frontend para o `RitoEnum` correto antes de atribuir ao ORM. Valores inválidos retornam `422` com mensagem clara listando os valores aceitos.
 
 ---
 
-## 📋 Próximos Passos Sugeridos para a Próxima Sessão
-1. **Deploy no Servidor VPS (`srv854308`)**:
-   - Rodar `git pull && npm run build` em `/var/www/esigma/frontend`, `/var/www/corevm/frontend` e `/var/www/lojas/frontend` para refletir as melhorias em produção na VPS.
-2. **Capacitor Mobile (Fase 3 do Plano Mobile First)**:
-   - Gerar APKs de teste via Android Studio (`npx cap open android`).
-   - Adicionar plugins do Capacitor (`@capacitor/status-bar`, `@capacitor/splash-screen`, `@capacitor/haptics`) para feedback tátil nativo nos botões.
-3. **Módulo Lojas**: Prosseguir com o espelhamento estrito do layout visual do sistema legado Sigma no frontend do Lojas.
+## 3. Commits desta sessão
+
+| Hash | Descrição |
+|---|---|
+| `ab3ac69` | `fix(auth)`: aceitar chamadas inter-serviços via X-Service-Key sem Authorization obrigatório |
+| `564ebd8` | `fix(rito)`: normalizar valor do rito antes de atribuir ao SQLAlchemyEnum |
+
+---
+
+## 4. Pendências conhecidas
+
+### 4.1 Verificar valor canônico do ENUM no PostgreSQL
+
+> ⚠️ O `RitoEnum.RER` tem `value = "Rito Escocês Retificado"`. Verificar se o tipo ENUM no banco tem exatamente esse valor (com acento) ou uma variação:
+> ```sql
+> SELECT unnest(enum_range(NULL::ritoEnum));
+> ```
+> Se divergir, ajustar o `_mapa_rito` em `loja_admin_service.py` e o `_MAPA_RITO_CANONICO` em `CoReVM/lojas_cliente.py`.
+
+### 4.2 Dívida técnica — fronteira de módulos (não urgente)
+
+Ainda existem acessos diretos ao `lojas_db` no CoReVM (via fallback de resiliência). Isso é intencional e documentado, mas a migração completa para API HTTP pura é o objetivo de longo prazo. O script `CoReVM/backend/scripts/verificar_fronteiras_api.py` mantém a allowlist.
+
+### 4.3 Domínios pendentes de migração para `lojas_db`
+
+Conforme `AGENTS.md`:
+- [ ] Finanças (Tesouraria, mensalidades, balancetes)
+- [ ] Biblioteca (Acervo, empréstimos)
+- [ ] Classificados
+- [ ] Arquiteto (Planejamento de obras)
+- [ ] Patrimônio
+
+---
+
+## 5. Arquitetura inter-serviços atual
+
+### Como o CoReVM se autentica no Lojas
+
+```
+CoReVM → PUT /api/v1/lojas/{id}
+  headers:
+    X-Service-Key: <LOJAS_SERVICE_KEY>          ← chave secreta inter-módulos
+    X-Operador-Papel: DIRETORIA_REGIONAL        ← papel do operador no CoReVM
+    Authorization: Bearer <token>               ← OPCIONAL (pode estar ausente)
+```
+
+A verificação `_verificar_acesso_servico_regional()` em `dependencies.py` valida a `X-Service-Key` e autoriza sem precisar de usuário e-Sigma.
+
+### Valores canônicos do `RitoEnum`
+
+| Enum Python | Value no DB |
+|---|---|
+| `REAA` | `"REAA"` |
+| `YORK` | `"Rito York"` |
+| `SCHRODER` | `"Rito Schroder"` |
+| `BRASILEIRO` | `"Rito Brasileiro"` |
+| `MODERNO` | `"Rito Moderno"` |
+| `ADONHIRAMITA` | `"Rito Adonhiramita"` |
+| `RER` | `"Rito Escocês Retificado"` |
+
+---
+
+## 6. Próximos passos sugeridos
+
+1. Verificar o deploy na VPS e confirmar que `PUT /api/v1/lojas/140` com `X-Service-Key` retorna 200
+2. Testar atualização de rito pela interface do CoReVM para confirmar o fix do 500
+3. Iniciar migração dos domínios de Finanças/Biblioteca para `lojas_db` (prioridade definida com o usuário)
