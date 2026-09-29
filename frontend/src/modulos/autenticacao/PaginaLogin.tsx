@@ -393,13 +393,14 @@ export const PaginaLogin: React.FC = () => {
                 <Box sx={{ flex: 1, height: '1px', bgcolor: 'rgba(255,255,255,0.1)' }} />
               </Box>
 
-              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3, height: '46px', borderRadius: '50px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)', '&:hover': { borderColor: 'rgba(255,255,255,0.3)', opacity: 1 }, opacity: 0.9, transition: 'all 0.2s' }}>
                 <GoogleLogin
                   onSuccess={handleGoogleSuccess}
                   onError={() => {
                     setErro('Ocorreu um erro ao tentar fazer login com o Google');
                   }}
                   theme="filled_black"
+                  shape="pill"
                   text="continue_with"
                   width="380"
                 />
