@@ -160,6 +160,7 @@ def obter_usuario_esigma(
             if len(_cache_validacao) > 500:
                 expiradas = [k for k, v in _cache_validacao.items() if v[0] <= agora]
                 for k in expiradas:
+                    _cache_validacao.pop(k, None)
         return usuario_validado
 
 
