@@ -20,6 +20,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Drawer,
   Grid,
   MenuItem,
   Tabs,
@@ -29,7 +30,8 @@ import {
   Alert,
   Paper,
   useTheme,
-  alpha
+  alpha,
+  Stack
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -66,7 +68,7 @@ export const PaginaQuadroObreiros: React.FC = () => {
   const [termoBusca, setTermoBusca] = useState('');
   const [filtroGrau, setFiltroGrau] = useState('');
 
-  // Detalhes do Obreiro (Modal)
+  // Detalhes do Obreiro (Drawer)
   const [modalDetalheAberto, setModalDetalheAberto] = useState(false);
   const [obreiroSelecionado, setObreiroSelecionado] = useState<any>(null);
   const [carregandoDetalhe, setCarregandoDetalhe] = useState(false);
@@ -222,55 +224,60 @@ export const PaginaQuadroObreiros: React.FC = () => {
           border: `1px solid ${alpha(theme.palette.divider, 0.1)}`
         }}
       >
-        <TextField
-          fullWidth
-          variant="outlined"
-          placeholder="Buscar membro por nome, email ou CIM..."
-          value={termoBusca}
-          onChange={(e) => setTermoBusca(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && carregarObreiros()}
-          sx={{
-            mb: 0,
-            '& .MuiOutlinedInput-root': {
-              borderRadius: '12px',
-              backgroundColor: 'transparent',
-              '& fieldset': {
-                borderColor: alpha(theme.palette.divider, 0.2),
-              },
-              '&:hover fieldset': {
-                borderColor: theme.palette.primary.main,
-              },
-            }
-          }}
-          slotProps={{
-            input: {
-              startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1 }} />,
-            }
-          }}
-        />
-
-        <Box sx={{ display: 'flex', gap: 1, mt: 2.5, flexWrap: 'wrap' }}>
-          {['Todos', 'Aprendiz', 'Companheiro', 'Mestre', 'Mestre Instalado'].map((grau) => {
-            const isAtivo = (grau === 'Todos' && !filtroGrau) || filtroGrau === grau;
-            return (
-              <Chip
-                key={grau}
-                label={grau === 'Todos' ? 'Todos os Graus' : grau}
-                onClick={() => setFiltroGrau(grau === 'Todos' ? '' : grau)}
-                sx={{
-                  fontWeight: isAtivo ? 700 : 500,
-                  backgroundColor: isAtivo ? alpha(theme.palette.primary.main, 0.2) : 'transparent',
-                  color: isAtivo ? theme.palette.primary.main : theme.palette.text.secondary,
-                  border: `1px solid ${isAtivo ? theme.palette.primary.main : alpha(theme.palette.divider, 0.2)}`,
-                  borderRadius: '16px',
-                  '&:hover': {
-                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                  }
-                }}
-              />
-            );
-          })}
-        </Box>
+        <Grid container spacing={2} alignItems="center">
+          <Grid size={{ xs: 12, md: 5 }}>
+            <TextField
+              fullWidth
+              variant="outlined"
+              placeholder="Buscar membro por nome, email ou CIM..."
+              value={termoBusca}
+              onChange={(e) => setTermoBusca(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && carregarObreiros()}
+              sx={{
+                mb: 0,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '12px',
+                  backgroundColor: 'transparent',
+                  '& fieldset': {
+                    borderColor: alpha(theme.palette.divider, 0.2),
+                  },
+                  '&:hover fieldset': {
+                    borderColor: theme.palette.primary.main,
+                  },
+                }
+              }}
+              slotProps={{
+                input: {
+                  startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1 }} />,
+                }
+              }}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 7 }}>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              {['Todos', 'Aprendiz', 'Companheiro', 'Mestre', 'Mestre Instalado'].map((grau) => {
+                const isAtivo = (grau === 'Todos' && !filtroGrau) || filtroGrau === grau;
+                return (
+                  <Chip
+                    key={grau}
+                    label={grau === 'Todos' ? 'Todos os Graus' : grau}
+                    onClick={() => setFiltroGrau(grau === 'Todos' ? '' : grau)}
+                    sx={{
+                      fontWeight: isAtivo ? 700 : 500,
+                      backgroundColor: isAtivo ? alpha(theme.palette.primary.main, 0.2) : 'transparent',
+                      color: isAtivo ? theme.palette.primary.main : theme.palette.text.secondary,
+                      border: `1px solid ${isAtivo ? theme.palette.primary.main : alpha(theme.palette.divider, 0.2)}`,
+                      borderRadius: '16px',
+                      '&:hover': {
+                        backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                      }
+                    }}
+                  />
+                );
+              })}
+            </Box>
+          </Grid>
+        </Grid>
       </Paper>
 
       {/* Tabela do Quadro de Membros no Padrão Canônico SiGMa (Floating Pill Rows) */}
@@ -475,24 +482,31 @@ export const PaginaQuadroObreiros: React.FC = () => {
         </TableContainer>
       </Paper>
 
-      {/* Modal: Ficha Detalhada do Obreiro */}
-      <Dialog
+      {/* Drawer: Ficha Detalhada do Obreiro */}
+      <Drawer
+        anchor="right"
         open={modalDetalheAberto}
         onClose={() => setModalDetalheAberto(false)}
-        maxWidth="md"
-        fullWidth
+        PaperProps={{
+          sx: { width: { xs: '100%', sm: 500, md: 650 } }
+        }}
       >
-        <DialogTitle sx={{ fontWeight: 700, borderBottom: 1, borderColor: 'divider' }}>
-          Ficha Cadastral do Obreiro
-        </DialogTitle>
-        <DialogContent sx={{ minHeight: 350 }}>
+        <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: 1, borderColor: 'divider' }}>
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+            Ficha Cadastral do Obreiro
+          </Typography>
+          <Button onClick={() => setModalDetalheAberto(false)} color="inherit">
+            Fechar
+          </Button>
+        </Box>
+        <Box sx={{ p: 3, flex: 1, overflowY: 'auto' }}>
           {carregandoDetalhe || !obreiroSelecionado ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
               <CircularProgress />
             </Box>
           ) : (
             <Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, my: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
                 <Avatar
                   src={obreiroSelecionado.caminho_foto_perfil}
                   sx={{ width: 64, height: 64, bgcolor: 'primary.main', fontSize: 24, fontWeight: 700 }}
@@ -500,16 +514,22 @@ export const PaginaQuadroObreiros: React.FC = () => {
                   {obreiroSelecionado.nome_completo.charAt(0)}
                 </Avatar>
                 <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
                     {obreiroSelecionado.nome_completo}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5 }}>
                     CIM: {obreiroSelecionado.cim || 'Não Informado'} • CPF: {obreiroSelecionado.cpf || '—'}
                   </Typography>
                 </Box>
               </Box>
 
-              <Tabs value={abaDetalhe} onChange={(_, val) => setAbaDetalhe(val)} sx={{ borderBottom: 1, borderColor: 'divider' }}>
+              <Tabs 
+                value={abaDetalhe} 
+                onChange={(_, val) => setAbaDetalhe(val)} 
+                variant="scrollable"
+                scrollButtons="auto"
+                sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}
+              >
                 <Tab label="Dados Civis" />
                 <Tab label="Dados Maçônicos" />
                 <Tab label="Família" />
@@ -518,34 +538,34 @@ export const PaginaQuadroObreiros: React.FC = () => {
 
               {/* Aba 1: Dados Civis */}
               <CustomTabPanel value={abaDetalhe} index={0}>
-                <Grid container spacing={2}>
-                  <Grid size={{ xs: 12, sm: 4 }}>
+                <Grid container spacing={3}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
                     <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>DATA DE NASCIMENTO</Typography>
                     <Typography variant="body2">{obreiroSelecionado.data_nascimento || '—'}</Typography>
                   </Grid>
-                  <Grid size={{ xs: 12, sm: 4 }}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
                     <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>ESTADO CIVIL</Typography>
                     <Typography variant="body2">{obreiroSelecionado.estado_civil || '—'}</Typography>
                   </Grid>
-                  <Grid size={{ xs: 12, sm: 4 }}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
                     <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>TIPO SANGUÍNEO</Typography>
                     <Typography variant="body2">{obreiroSelecionado.tipo_sanguineo || '—'}</Typography>
                   </Grid>
-
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>FILIAÇÃO (PAI)</Typography>
-                    <Typography variant="body2">{obreiroSelecionado.nome_pai || '—'}</Typography>
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>FILIAÇÃO (MÃE)</Typography>
-                    <Typography variant="body2">{obreiroSelecionado.nome_mae || '—'}</Typography>
-                  </Grid>
-
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>PROFISSÃO</Typography>
                     <Typography variant="body2">{obreiroSelecionado.profissao || '—'}</Typography>
                   </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
+
+                  <Grid size={{ xs: 12 }}>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>FILIAÇÃO (PAI)</Typography>
+                    <Typography variant="body2">{obreiroSelecionado.nome_pai || '—'}</Typography>
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>FILIAÇÃO (MÃE)</Typography>
+                    <Typography variant="body2">{obreiroSelecionado.nome_mae || '—'}</Typography>
+                  </Grid>
+
+                  <Grid size={{ xs: 12 }}>
                     <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>ENDEREÇO</Typography>
                     <Typography variant="body2">
                       {obreiroSelecionado.logradouro ? `${obreiroSelecionado.logradouro}, ${obreiroSelecionado.numero || 'SN'} - ${obreiroSelecionado.bairro || ''} (${obreiroSelecionado.cidade || ''}/${obreiroSelecionado.estado || ''})` : '—'}
@@ -556,34 +576,34 @@ export const PaginaQuadroObreiros: React.FC = () => {
 
               {/* Aba 2: Dados Maçônicos */}
               <CustomTabPanel value={abaDetalhe} index={1}>
-                <Grid container spacing={2}>
-                  <Grid size={{ xs: 12, sm: 4 }}>
+                <Grid container spacing={3}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
                     <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>GRAU SIMBÓLICO</Typography>
                     <Typography variant="body2" sx={{ fontWeight: 600, color: 'primary.main' }}>
                       {obreiroSelecionado.grau}
                     </Typography>
                   </Grid>
-                  <Grid size={{ xs: 12, sm: 4 }}>
-                    <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>INICIAÇÃO</Typography>
-                    <Typography variant="body2">{obreiroSelecionado.data_iniciacao || '—'}</Typography>
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 4 }}>
-                    <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>ELEVAÇÃO</Typography>
-                    <Typography variant="body2">{obreiroSelecionado.data_elevacao || '—'}</Typography>
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 4 }}>
-                    <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>EXALTAÇÃO</Typography>
-                    <Typography variant="body2">{obreiroSelecionado.data_exaltacao || '—'}</Typography>
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 4 }}>
-                    <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>INSTALAÇÃO</Typography>
-                    <Typography variant="body2">{obreiroSelecionado.data_instalacao || '—'}</Typography>
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 4 }}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
                     <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>REGULARIDADE FINANCEIRA</Typography>
                     <Typography variant="body2" sx={{ color: obreiroSelecionado.regularidade_financeira ? 'success.main' : 'error.main', fontWeight: 600 }}>
                       {obreiroSelecionado.regularidade_financeira ? 'Regular' : 'Pendente'}
                     </Typography>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>INICIAÇÃO</Typography>
+                    <Typography variant="body2">{obreiroSelecionado.data_iniciacao || '—'}</Typography>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>ELEVAÇÃO</Typography>
+                    <Typography variant="body2">{obreiroSelecionado.data_elevacao || '—'}</Typography>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>EXALTAÇÃO</Typography>
+                    <Typography variant="body2">{obreiroSelecionado.data_exaltacao || '—'}</Typography>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>INSTALAÇÃO</Typography>
+                    <Typography variant="body2">{obreiroSelecionado.data_instalacao || '—'}</Typography>
                   </Grid>
                 </Grid>
               </CustomTabPanel>
@@ -595,34 +615,32 @@ export const PaginaQuadroObreiros: React.FC = () => {
                     Nenhum familiar cadastrado.
                   </Typography>
                 ) : (
-                  <Grid container spacing={2}>
-                    {obreiroSelecionado.familiares.map((fam: any) => (
-                      <Grid size={{ xs: 12, sm: 6 }} key={fam.id}>
-                        <Card variant="outlined">
-                          <CardContent sx={{ py: 1.5 }}>
-                            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{fam.nome_completo}</Typography>
-                            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                              {fam.tipo_relacionamento} {fam.telefone ? `• ${fam.telefone}` : ''}
-                            </Typography>
-                          </CardContent>
-                        </Card>
-                      </Grid>
+                  <Stack spacing={2}>
+                    {obreiroSelecionado.familiares?.map((fam: any) => (
+                      <Card variant="outlined" key={fam.id}>
+                        <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{fam.nome_completo}</Typography>
+                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                            {fam.tipo_relacionamento} {fam.telefone ? `• ${fam.telefone}` : ''}
+                          </Typography>
+                        </CardContent>
+                      </Card>
                     ))}
-                  </Grid>
+                  </Stack>
                 )}
               </CustomTabPanel>
 
               {/* Aba 4: Mandatos & Honrarias */}
               <CustomTabPanel value={abaDetalhe} index={3}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>Histórico de Mandatos em Loja</Typography>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2 }}>Histórico de Mandatos em Loja</Typography>
                 {obreiroSelecionado.mandatos?.length === 0 ? (
                   <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
                     Nenhum mandato registrado nesta oficina.
                   </Typography>
                 ) : (
-                  <Box sx={{ mb: 2 }}>
-                    {obreiroSelecionado.mandatos.map((m: any) => (
-                      <Box key={m.id} sx={{ py: 1, borderBottom: 1, borderColor: 'divider' }}>
+                  <Box>
+                    {obreiroSelecionado.mandatos?.map((m: any) => (
+                      <Box key={m.id} sx={{ py: 1.5, borderBottom: 1, borderColor: 'divider' }}>
                         <Typography variant="body2" sx={{ fontWeight: 600 }}>{m.cargo_nome || `Cargo #${m.cargo_id}`}</Typography>
                         <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                           Início: {m.data_inicio} {m.data_fim ? `• Fim: ${m.data_fim}` : '• Atual'}
@@ -634,11 +652,8 @@ export const PaginaQuadroObreiros: React.FC = () => {
               </CustomTabPanel>
             </Box>
           )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setModalDetalheAberto(false)}>Fechar</Button>
-        </DialogActions>
-      </Dialog>
+        </Box>
+      </Drawer>
 
       {/* Modal: Novo Obreiro */}
       <Dialog
