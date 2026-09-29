@@ -662,7 +662,7 @@ export const PaginaSessoes: React.FC = () => {
         anchor="right"
         open={modalDetalheAberto}
         onClose={() => setModalDetalheAberto(false)}
-        PaperProps={{ sx: { width: { xs: '100%', md: '600px' } } }}
+        slotProps={{ paper: { sx: { width: { xs: '100%', md: '600px' } } } }}
       >
         <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: 1, borderColor: 'divider' }}>
           <Typography variant="h6" sx={{ fontWeight: 700 }}>

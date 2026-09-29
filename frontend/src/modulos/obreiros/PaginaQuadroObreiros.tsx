@@ -224,7 +224,7 @@ export const PaginaQuadroObreiros: React.FC = () => {
           border: `1px solid ${alpha(theme.palette.divider, 0.1)}`
         }}
       >
-        <Grid container spacing={2} alignItems="center">
+        <Grid container spacing={2} sx={{ alignItems: 'center' }}>
           <Grid size={{ xs: 12, md: 5 }}>
             <TextField
               fullWidth
@@ -487,8 +487,8 @@ export const PaginaQuadroObreiros: React.FC = () => {
         anchor="right"
         open={modalDetalheAberto}
         onClose={() => setModalDetalheAberto(false)}
-        PaperProps={{
-          sx: { width: { xs: '100%', sm: 500, md: 650 } }
+        slotProps={{
+          paper: { sx: { width: { xs: '100%', sm: 500, md: 650 } } }
         }}
       >
         <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: 1, borderColor: 'divider' }}>
