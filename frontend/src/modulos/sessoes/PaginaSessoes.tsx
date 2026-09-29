@@ -29,6 +29,7 @@ import {
   Divider,
   Paper,
   Fab,
+  Drawer,
   useTheme,
   alpha
 } from '@mui/material';
@@ -656,17 +657,22 @@ export const PaginaSessoes: React.FC = () => {
         </TableContainer>
       </Paper>
 
-      {/* Modal: Detalhes da Sessão & Livro de Presença */}
-      <Dialog
+      {/* Drawer: Detalhes da Sessão & Livro de Presença (Master-Detail) */}
+      <Drawer
+        anchor="right"
         open={modalDetalheAberto}
         onClose={() => setModalDetalheAberto(false)}
-        maxWidth="md"
-        fullWidth
+        PaperProps={{ sx: { width: { xs: '100%', md: '600px' } } }}
       >
-        <DialogTitle sx={{ fontWeight: 700, borderBottom: 1, borderColor: 'divider' }}>
-          Detalhes da Sessão e Livro de Presença
-        </DialogTitle>
-        <DialogContent sx={{ minHeight: 350, py: 2.5 }}>
+        <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: 1, borderColor: 'divider' }}>
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+            Detalhes da Sessão e Livro de Presença
+          </Typography>
+          <IconButton onClick={() => setModalDetalheAberto(false)} size="small">
+            <Typography variant="body1">✕</Typography>
+          </IconButton>
+        </Box>
+        <Box sx={{ p: 2.5, flex: 1, overflowY: 'auto', minHeight: 350 }}>
           {carregandoDetalhe || !sessaoSelecionada ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
               <CircularProgress />
@@ -766,11 +772,11 @@ export const PaginaSessoes: React.FC = () => {
               )}
             </Box>
           )}
-        </DialogContent>
-        <DialogActions>
+        </Box>
+        <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider', display: 'flex', justifyContent: 'flex-end' }}>
           <Button onClick={() => setModalDetalheAberto(false)}>Fechar</Button>
-        </DialogActions>
-      </Dialog>
+        </Box>
+      </Drawer>
 
       {/* Modal: Agendar Nova Sessão */}
       <Dialog
