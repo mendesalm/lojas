@@ -1,98 +1,39 @@
 # Handoff — Módulo Lojas
-**Gerado em:** 2026-09-28T20:51:00-03:00  
-**Sessão:** Fix autenticação inter-serviços CoReVM → Lojas + normalização de RitoEnum
+**Gerado em:** 2026-09-28T21:06:00-03:00  
+**Sessão:** Fix auth inter-serviços + RitoEnum + strings vazias em ENUMs
 
 ---
 
 ## 1. Estado atual
 
-O módulo está **implantado na VPS** (`lojas.e-sigma.app`, porta 8001). Os commits desta sessão foram enviados e o GitHub Actions deve ter concluído o deploy.
+Deploy em andamento ao encerrar (~21:06). Aguardar ~3 minutos e confirmar que a atualização de rito de lojas no CoReVM funciona sem 500.
 
 ---
 
-## 2. O que foi feito nesta sessão
+## 2. Bugs corrigidos nesta sessão
 
-### 2.1 Fix: chamadas inter-serviços sem `Authorization` causavam 422
+### 2.1 Auth inter-serviços — 422 sem Authorization
+**Commits:** `ab3ac69`
 
-**Problema:** O CoReVM chama `PUT /api/v1/lojas/{id}` com header `X-Service-Key` e sem `Authorization`. A dependência `exigir_permissao_gestao_loja` usava `get_usuario_e_obreiro` (que exige Authorization obrigatório) → retornava 422, tratado como 404 pelo CoReVM.
+- **`backend/core/auth_esigma.py`**: `obter_usuario_esigma_opcional` com `authorization: Optional[str] = Header(None)`.
+- **`backend/core/dependencies.py`**: `get_usuario_e_obreiro_opcional`; dependências `exigir_permissao_gestao_loja`, `exigir_vm_ou_webmaster_da_loja`, `exigir_membro_ou_diretoria_da_loja` verificam `X-Service-Key` antes de exigir `Authorization`.
 
-**Arquivos alterados:**
+### 2.2 RitoEnum — string pura no campo ORM → 500
+**Commits:** `564ebd8`
 
-- **`backend/core/auth_esigma.py`**  
-  Adicionada `obter_usuario_esigma_opcional`: `authorization: Optional[str] = Header(None)` — retorna `None` em vez de 422 quando não há token.
+- **`backend/services/loja_admin_service.py`**: substituído bloco `except: loja.rito = rito_val` por mapa de normalização `_mapa_rito` que converte variações do frontend para `RitoEnum` correto. Valor inválido retorna 422 com lista de valores aceitos.
 
-- **`backend/core/dependencies.py`**  
-  - Adicionada `get_usuario_e_obreiro_opcional`  
-  - `exigir_permissao_gestao_loja`, `exigir_vm_ou_webmaster_da_loja`, `exigir_membro_ou_diretoria_da_loja` migradas para usar `get_usuario_e_obreiro_opcional`  
-  - Verificam `_verificar_acesso_servico_regional(x_service_key, ...)` antes de exigir `Authorization`
+### 2.3 Strings vazias em colunas ENUM → `InvalidTextRepresentation`
+**Commits:** `f98863b`
 
-### 2.2 Fix: `RitoEnum` — 500 ao atualizar rito com valor não canônico
-
-**Problema:** `atualizar_dados_loja` em `loja_admin_service.py` fazia:
-```python
-try:
-    loja.rito = RitoEnum(rito_val)
-except Exception:
-    loja.rito = rito_val   # ← atribui string pura ao SQLAlchemyEnum → 500 no commit
-```
-
-**Arquivo alterado:**
-
-- **`backend/services/loja_admin_service.py`**  
-  Substituído bloco problemático por mapa de normalização robusto `_mapa_rito` que converte variações do frontend para o `RitoEnum` correto antes de atribuir ao ORM. Valores inválidos retornam `422` com mensagem clara listando os valores aceitos.
+- **`backend/services/loja_admin_service.py`**: filtro `{k:v for ... if v is not None and str(v).strip() != ""}` imediatamente após `model_dump(exclude_unset=True)`.
+- **Causa:** frontend envia todos os campos do formulário, incluindo `dia_sessao=""`, `periodicidade=""` — inválidos para `dia_sessao_enum` e `periodicidade_enum` no PostgreSQL.
 
 ---
 
-## 3. Commits desta sessão
+## 3. Valores canônicos dos ENUMs relevantes
 
-| Hash | Descrição |
-|---|---|
-| `ab3ac69` | `fix(auth)`: aceitar chamadas inter-serviços via X-Service-Key sem Authorization obrigatório |
-| `564ebd8` | `fix(rito)`: normalizar valor do rito antes de atribuir ao SQLAlchemyEnum |
-
----
-
-## 4. Pendências conhecidas
-
-### 4.1 Verificar valor canônico do ENUM no PostgreSQL
-
-> ⚠️ O `RitoEnum.RER` tem `value = "Rito Escocês Retificado"`. Verificar se o tipo ENUM no banco tem exatamente esse valor (com acento) ou uma variação:
-> ```sql
-> SELECT unnest(enum_range(NULL::ritoEnum));
-> ```
-> Se divergir, ajustar o `_mapa_rito` em `loja_admin_service.py` e o `_MAPA_RITO_CANONICO` em `CoReVM/lojas_cliente.py`.
-
-### 4.2 Dívida técnica — fronteira de módulos (não urgente)
-
-Ainda existem acessos diretos ao `lojas_db` no CoReVM (via fallback de resiliência). Isso é intencional e documentado, mas a migração completa para API HTTP pura é o objetivo de longo prazo. O script `CoReVM/backend/scripts/verificar_fronteiras_api.py` mantém a allowlist.
-
-### 4.3 Domínios pendentes de migração para `lojas_db`
-
-Conforme `AGENTS.md`:
-- [ ] Finanças (Tesouraria, mensalidades, balancetes)
-- [ ] Biblioteca (Acervo, empréstimos)
-- [ ] Classificados
-- [ ] Arquiteto (Planejamento de obras)
-- [ ] Patrimônio
-
----
-
-## 5. Arquitetura inter-serviços atual
-
-### Como o CoReVM se autentica no Lojas
-
-```
-CoReVM → PUT /api/v1/lojas/{id}
-  headers:
-    X-Service-Key: <LOJAS_SERVICE_KEY>          ← chave secreta inter-módulos
-    X-Operador-Papel: DIRETORIA_REGIONAL        ← papel do operador no CoReVM
-    Authorization: Bearer <token>               ← OPCIONAL (pode estar ausente)
-```
-
-A verificação `_verificar_acesso_servico_regional()` em `dependencies.py` valida a `X-Service-Key` e autoriza sem precisar de usuário e-Sigma.
-
-### Valores canônicos do `RitoEnum`
-
+### `RitoEnum`
 | Enum Python | Value no DB |
 |---|---|
 | `REAA` | `"REAA"` |
@@ -103,10 +44,39 @@ A verificação `_verificar_acesso_servico_regional()` em `dependencies.py` vali
 | `ADONHIRAMITA` | `"Rito Adonhiramita"` |
 | `RER` | `"Rito Escocês Retificado"` |
 
+### `dia_sessao_enum` (valores esperados pelo banco)
+`"Segundas-feiras"`, `"Terças-feiras"`, `"Quartas-feiras"`, `"Quintas-feiras"`, `"Sextas-feiras"`, `"Sábados"`, `"Domingos"`
+
+> ⚠️ Verificar com `SELECT unnest(enum_range(NULL::dia_sessao_enum));` na VPS para confirmar.
+
 ---
 
-## 6. Próximos passos sugeridos
+## 4. Pendências
 
-1. Verificar o deploy na VPS e confirmar que `PUT /api/v1/lojas/140` com `X-Service-Key` retorna 200
-2. Testar atualização de rito pela interface do CoReVM para confirmar o fix do 500
-3. Iniciar migração dos domínios de Finanças/Biblioteca para `lojas_db` (prioridade definida com o usuário)
+### 4.1 Confirmar deploy e testar
+- Editar rito de uma loja no CoReVM → deve salvar sem erro.
+
+### 4.2 Dívida técnica — domínios pendentes de migração para `lojas_db`
+- [ ] Finanças (Tesouraria, mensalidades, balancetes)
+- [ ] Biblioteca
+- [ ] Classificados
+- [ ] Arquiteto
+- [ ] Patrimônio
+
+### 4.3 Alinhamento visual do dashboard com frontend legado Sigma
+- Ver `AGENTS.md` seção 4 — clone de design do `sigma/frontend`.
+
+---
+
+## 5. Como o CoReVM se autentica no Lojas
+
+```
+CoReVM → PUT /api/v1/lojas/{id}
+  Headers:
+    X-Service-Key: <LOJAS_SERVICE_KEY>       ← chave secreta inter-módulos
+    X-Operador-Papel: DIRETORIA_REGIONAL     ← papel do operador
+    Authorization: Bearer <token>            ← OPCIONAL
+  Body: {campos não-nulos e não-vazios apenas}
+```
+
+A verificação `_verificar_acesso_servico_regional()` em `dependencies.py` valida a chave e autoriza sem precisar de `UsuarioEsigma`.
