@@ -87,6 +87,10 @@ def atualizar_dados_loja(db: Session, loja_id: int, payload: LojaDadosUpdate) ->
         raise HTTPException(status_code=404, detail="Loja não encontrada.")
 
     dados = payload.model_dump(exclude_unset=True)
+    # Remove strings vazias — causam InvalidTextRepresentation em colunas ENUM do PostgreSQL
+    # (ex: dia_sessao_enum, ritoEnum, periodicidade_enum). O frontend envia todos os campos
+    # do formulário, inclusive os que o usuário não preencheu.
+    dados = {k: v for k, v in dados.items() if v is not None and str(v).strip() != ""}
 
     # Tratamento de aliases para compatibilidade com o legado e CoReVM
     if "nome" in dados and dados["nome"] is not None:
