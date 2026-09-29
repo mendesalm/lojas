@@ -21,8 +21,6 @@ import { useAuth, clienteHttp } from '../../compartilhado/contextos/AuthContext'
 import type { LojaItem } from '../../compartilhado/contextos/AuthContext';
 import { HeroBackground } from '../../compartilhado/componentes/HeroBackground';
 import { LogoAnimadaLojas } from '../../compartilhado/componentes/LogoAnimadaLojas';
-import { GoogleLogin } from '@react-oauth/google';
-import type { CredentialResponse } from '@react-oauth/google';
 import { obterUrlEsigmaApi, obterUrlLojasApi } from '@/compartilhado/servicos/configuracaoApi';
 
 const ESIGMA_API_URL = obterUrlEsigmaApi();
@@ -69,55 +67,6 @@ export const PaginaLogin: React.FC = () => {
 
   const navigate = useNavigate();
   const { login, setLojaAtivaId, selecionarLoja, carregarLojasDisponiveis } = useAuth();
-
-  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
-    setErro(null);
-    setCarregando(true);
-    try {
-      const credential = credentialResponse?.credential;
-      if (!credential) throw new Error('O Google não retornou uma credencial válida.');
-
-      const resposta = await axios.post(`${ESIGMA_API_URL}/auth/google`, {
-        credential,
-        modulo_origem: 'lojas'
-      });
-      const { access_token, deve_trocar_senha } = resposta.data;
-      const payload = decodificarPayloadJwt(access_token);
-
-      login(access_token, {
-        id: payload.user_id || payload.sub,
-        nome: payload.nome || payload.sub,
-        email: payload.sub,
-        roles: payload.role ? [payload.role] : [],
-        loja_id: payload.loja_id
-      });
-
-      if (deve_trocar_senha) {
-        navigate('/trocar-senha-obrigatoria', { replace: true });
-        return;
-      }
-
-      const lojas = await carregarLojasDisponiveis(access_token);
-      if (lojas && lojas.length > 1) {
-        setLojasParaEscolha(lojas);
-        return;
-      }
-
-      if (lojas && lojas.length === 1) {
-        selecionarLoja(lojas[0]);
-      } else {
-        const vinculo = await buscarMinhaLoja();
-        if (vinculo?.loja_id) {
-          setLojaAtivaId(vinculo.loja_id);
-        }
-      }
-      navigate('/inicio', { replace: true });
-    } catch (err: any) {
-      setErro(err.response?.data?.detail || err.message || 'Falha no login com Google.');
-    } finally {
-      setCarregando(false);
-    }
-  };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -387,24 +336,6 @@ export const PaginaLogin: React.FC = () => {
                 {carregando ? <CircularProgress size={24} color="inherit" /> : 'Entrar'}
               </Button>
 
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <Box sx={{ flex: 1, height: '1px', bgcolor: 'rgba(255,255,255,0.1)' }} />
-                <Typography variant="body2" sx={{ px: 2, color: 'text.secondary' }}>ou</Typography>
-                <Box sx={{ flex: 1, height: '1px', bgcolor: 'rgba(255,255,255,0.1)' }} />
-              </Box>
-
-              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={() => {
-                    setErro('Ocorreu um erro ao tentar fazer login com o Google');
-                  }}
-                  theme="filled_black"
-                  text="continue_with"
-                  width="380"
-                />
-              </Box>
-
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, alignItems: 'center', mt: 2 }}>
                 <Typography variant="body2" color="text.secondary">
                   Não tem uma conta?{' '}
@@ -416,26 +347,6 @@ export const PaginaLogin: React.FC = () => {
                     Solicitar cadastro
                   </Link>
                 </Typography>
-
-                <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
-                  <Link
-                    component={RouterLink}
-                    to="/entrar-com-link"
-                    variant="caption"
-                    sx={{ color: 'text.secondary', textDecoration: 'none', '&:hover': { color: '#DDB96B', textDecoration: 'underline' } }}
-                  >
-                    Entrar sem senha (link)
-                  </Link>
-                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>•</Typography>
-                  <Link
-                    component={RouterLink}
-                    to="/entrar-com-passkey"
-                    variant="caption"
-                    sx={{ color: 'text.secondary', textDecoration: 'none', '&:hover': { color: '#DDB96B', textDecoration: 'underline' } }}
-                  >
-                    Entrar com passkey
-                  </Link>
-                </Box>
               </Box>
             </Box>
           )}
