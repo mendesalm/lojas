@@ -1,5 +1,16 @@
 @import "tailwindcss";
 
+@theme {
+  --color-sigma-bg: #070F1E;
+  --color-sigma-surface: #0A1428;
+  --color-sigma-elevated: #0E1C36;
+  --color-sigma-border: #1E325C;
+  --color-sigma-accent: #facc15;
+  --color-sigma-muted: #64748b;
+  --background-image-sigma-gold: linear-gradient(to right, #C6AB6A, #D1A958, #EBCD79);
+}
+
+
 :root {
   --m-light: #FDE68A;
   --m-mid: #DDB96B;
