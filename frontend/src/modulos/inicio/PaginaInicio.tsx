@@ -58,7 +58,7 @@ import type {
     Notice,
     LodgeMember
 } from './services/dashboardService';
-import LodgeMembersWidget from './components/LodgeMembersWidget';
+import MetricGridWidget from './components/MetricGridWidget';
 import LodgeCommemorativeEventsWidget from './components/LodgeCommemorativeEventsWidget';
 import LodgeNoticesWidget from './components/LodgeNoticesWidget';
 import LodgeSessionsWidget from './components/LodgeSessionsWidget';
@@ -329,7 +329,16 @@ export const PaginaInicio: React.FC = () => {
                 {/* Coluna Esquerda: Membros e Datas Comemorativas */}
                 <Grid size={{ xs: 10, md: 2 }} sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, height: { xs: 'auto', md: '100%' }, overflowY: 'auto', pr: 0.5, minHeight: 0 }}>
                     <Box sx={{ flexShrink: 0 }}>
-                        <LodgeMembersWidget stats={stats} onClick={handleOpenMembersModal} canManageLodge={canManageLodge} />
+                        <MetricGridWidget 
+                            stats={stats?.lodge_members_stats ? {
+                                total: stats.lodge_members_stats.total,
+                                apprentices: stats.lodge_members_stats.apprentices,
+                                fellows: stats.lodge_members_stats.fellows,
+                                masters: stats.lodge_members_stats.masters
+                            } : null} 
+                            onClick={handleOpenMembersModal} 
+                            canManageLodge={canManageLodge} 
+                        />
                     </Box>
 
                     <LodgeCommemorativeEventsWidget commemorativeEvents={commemorativeEvents} currentDate={currentDate} canManageLodge={canManageLodge} />
