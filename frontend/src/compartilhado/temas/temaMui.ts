@@ -79,7 +79,7 @@ export const obterTemaLojas = (modo: 'dark' | 'light') => {
             letterSpacing: '0.03em',
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           },
-          contained: {
+          containedPrimary: {
             backgroundImage: isDark
               ? 'linear-gradient(to right, #C6AB6A, #D1A958, #EBCD79)'
               : 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
