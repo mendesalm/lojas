@@ -25,8 +25,8 @@ export const obterTemaLojas = (modo: 'dark' | 'light') => {
         dark: '#B8862D',
       },
       background: {
-        default: isDark ? '#050508' : '#f8fafc', // Fundo Preto Abissal
-        paper: isDark ? '#0d1b35' : '#ffffff', // Deep Blue
+        default: isDark ? '#070F1E' : '#f8fafc', // Fundo Preto Abissal
+        paper: isDark ? '#0A1428' : '#ffffff', // Deep Blue
       },
       text: {
         primary: isDark ? '#ffffff' : '#0f172a',
@@ -81,22 +81,19 @@ export const obterTemaLojas = (modo: 'dark' | 'light') => {
           },
           contained: {
             backgroundImage: isDark
-              ? 'linear-gradient(180deg, #163663 0%, #091a33 100%), linear-gradient(180deg, #FDE68A 0%, #DDB96B 50%, #785012 100%)'
+              ? 'linear-gradient(to right, #C6AB6A, #D1A958, #EBCD79)'
               : 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
-            backgroundClip: 'padding-box, border-box',
-            backgroundOrigin: 'padding-box, border-box',
-            border: isDark ? '2px solid transparent' : 'none',
-            color: '#ffffff',
+            color: isDark ? '#070F1E' : '#ffffff',
             boxShadow: isDark 
-              ? '0 8px 20px -4px rgba(0, 0, 0, 0.8), 0 0 15px rgba(221, 185, 107, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.4)' 
+              ? '0 4px 15px rgba(209, 169, 88, 0.3)' 
               : '0 2px 8px rgba(2, 132, 199, 0.3)',
             '&:hover': {
               backgroundImage: isDark
-                ? 'linear-gradient(180deg, #1e457d 0%, #0d2345 100%), linear-gradient(180deg, #FFF3C4 0%, #FDE68A 50%, #936214 100%)'
+                ? 'linear-gradient(to right, #D1A958, #EBCD79, #C6AB6A)'
                 : 'linear-gradient(135deg, #0369a1 0%, #075985 100%)',
-              boxShadow: isDark ? '0 12px 24px -4px rgba(0, 0, 0, 0.9), 0 0 25px rgba(221, 185, 107, 0.45)' : 'none',
-              transform: 'translateY(-1.5px)',
+              boxShadow: isDark ? '0 6px 20px rgba(209, 169, 88, 0.5)' : 'none',
             },
+          },
           },
         },
       },
