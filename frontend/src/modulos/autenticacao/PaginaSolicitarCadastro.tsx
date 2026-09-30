@@ -86,7 +86,7 @@ export const PaginaSolicitarCadastro: React.FC = () => {
       <HeroBackground />
 
       <div className="w-full max-w-xl relative z-10 my-8">
-        <div className="bg-[#1a1a1a]/60 backdrop-blur-xl rounded-3xl p-8 sm:p-10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-yellow-500/20">
+        <div className="bg-sigma-elevated/60 backdrop-blur-xl rounded-3xl p-8 sm:p-10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-yellow-500/20">
 
           <div className="flex flex-col items-center text-center mb-8">
             <div className="mb-4">
@@ -132,7 +132,7 @@ export const PaginaSolicitarCadastro: React.FC = () => {
                     onChange={atualizarCampo('potencia_informada')}
                     placeholder=" "
                     autoComplete="off"
-                    className="peer w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
+                    className="peer w-full bg-sigma-elevated border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
                   />
                   <label className="absolute left-12 top-1.5 text-[10px] text-gray-500 transition-all pointer-events-none peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-[10px] peer-focus:text-yellow-500">
                     Potência Maçônica (ex: GOB, GL, etc.)
@@ -148,7 +148,7 @@ export const PaginaSolicitarCadastro: React.FC = () => {
                       value={form.numero_loja_informado}
                       onChange={atualizarCampo('numero_loja_informado')}
                       placeholder=" "
-                      className="peer w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
+                      className="peer w-full bg-sigma-elevated border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
                     />
                     <label className="absolute left-12 top-1.5 text-[10px] text-gray-500 transition-all pointer-events-none peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-[10px] peer-focus:text-yellow-500">
                       Nº da Loja
@@ -163,7 +163,7 @@ export const PaginaSolicitarCadastro: React.FC = () => {
                       value={form.nome_loja_informado}
                       onChange={atualizarCampo('nome_loja_informado')}
                       placeholder=" "
-                      className="peer w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
+                      className="peer w-full bg-sigma-elevated border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
                     />
                     <label className="absolute left-12 top-1.5 text-[10px] text-gray-500 transition-all pointer-events-none peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-[10px] peer-focus:text-yellow-500">
                       Nome da Loja
@@ -183,7 +183,7 @@ export const PaginaSolicitarCadastro: React.FC = () => {
                     value={form.nome_completo}
                     onChange={atualizarCampo('nome_completo')}
                     placeholder=" "
-                    className="peer w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
+                    className="peer w-full bg-sigma-elevated border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
                   />
                   <label className="absolute left-12 top-1.5 text-[10px] text-gray-500 transition-all pointer-events-none peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-[10px] peer-focus:text-yellow-500">
                     Nome Completo
@@ -199,7 +199,7 @@ export const PaginaSolicitarCadastro: React.FC = () => {
                       value={form.cim}
                       onChange={atualizarCampo('cim')}
                       placeholder=" "
-                      className="peer w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
+                      className="peer w-full bg-sigma-elevated border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
                     />
                     <label className="absolute left-12 top-1.5 text-[10px] text-gray-500 transition-all pointer-events-none peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-[10px] peer-focus:text-yellow-500">
                       CIM
@@ -214,7 +214,7 @@ export const PaginaSolicitarCadastro: React.FC = () => {
                       value={form.cpf}
                       onChange={atualizarCampo('cpf')}
                       placeholder=" "
-                      className="peer w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
+                      className="peer w-full bg-sigma-elevated border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
                     />
                     <label className="absolute left-12 top-1.5 text-[10px] text-gray-500 transition-all pointer-events-none peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-[10px] peer-focus:text-yellow-500">
                       CPF (apenas números)
@@ -229,7 +229,7 @@ export const PaginaSolicitarCadastro: React.FC = () => {
                       required
                       value={form.grau_maconico}
                       onChange={atualizarCampo('grau_maconico')}
-                      className="w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 py-3.5 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
+                      className="w-full bg-sigma-elevated border border-gray-700 rounded-xl pl-12 pr-4 py-3.5 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
                     >
                       <option value="">Selecione o Grau</option>
                       {GRAUS_MACONICOS.map((g) => (
@@ -248,7 +248,7 @@ export const PaginaSolicitarCadastro: React.FC = () => {
                       value={form.cargo_atual}
                       onChange={atualizarCampo('cargo_atual')}
                       placeholder=" "
-                      className="peer w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
+                      className="peer w-full bg-sigma-elevated border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
                     />
                     <label className="absolute left-12 top-1.5 text-[10px] text-gray-500 transition-all pointer-events-none peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-[10px] peer-focus:text-yellow-500">
                       Cargo Atual (ou "Membro")
@@ -265,7 +265,7 @@ export const PaginaSolicitarCadastro: React.FC = () => {
                       value={form.email}
                       onChange={atualizarCampo('email')}
                       placeholder=" "
-                      className="peer w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
+                      className="peer w-full bg-sigma-elevated border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
                     />
                     <label className="absolute left-12 top-1.5 text-[10px] text-gray-500 transition-all pointer-events-none peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-[10px] peer-focus:text-yellow-500">
                       E-mail de Contato
@@ -280,7 +280,7 @@ export const PaginaSolicitarCadastro: React.FC = () => {
                       value={form.telefone}
                       onChange={atualizarCampo('telefone')}
                       placeholder=" "
-                      className="peer w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
+                      className="peer w-full bg-sigma-elevated border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
                     />
                     <label className="absolute left-12 top-1.5 text-[10px] text-gray-500 transition-all pointer-events-none peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-[10px] peer-focus:text-yellow-500">
                       WhatsApp / Telefone

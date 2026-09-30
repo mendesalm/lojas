@@ -62,7 +62,7 @@ export const PaginaTrocarSenhaObrigatoria: React.FC = () => {
       <HeroBackground />
 
       <div className="w-full max-w-md relative z-10">
-        <div className="bg-[#1a1a1a]/60 backdrop-blur-xl rounded-3xl p-8 sm:p-10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-yellow-500/20">
+        <div className="bg-sigma-elevated/60 backdrop-blur-xl rounded-3xl p-8 sm:p-10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-yellow-500/20">
 
           <div className="flex flex-col items-center text-center mb-8">
             <div className="mb-4">
@@ -90,7 +90,7 @@ export const PaginaTrocarSenhaObrigatoria: React.FC = () => {
                 value={senhaAtual}
                 onChange={(e) => setSenhaAtual(e.target.value)}
                 placeholder=" "
-                className="peer w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
+                className="peer w-full bg-sigma-elevated border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
               />
               <label className="absolute left-12 top-1.5 text-[10px] text-gray-500 transition-all pointer-events-none peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-[10px] peer-focus:text-yellow-500">
                 Senha Provisória Atual
@@ -105,7 +105,7 @@ export const PaginaTrocarSenhaObrigatoria: React.FC = () => {
                 value={novaSenha}
                 onChange={(e) => setNovaSenha(e.target.value)}
                 placeholder=" "
-                className="peer w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
+                className="peer w-full bg-sigma-elevated border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
               />
               <label className="absolute left-12 top-1.5 text-[10px] text-gray-500 transition-all pointer-events-none peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-[10px] peer-focus:text-yellow-500">
                 Nova Senha (mínimo 8 dígitos)
@@ -120,7 +120,7 @@ export const PaginaTrocarSenhaObrigatoria: React.FC = () => {
                 value={confirmacaoSenha}
                 onChange={(e) => setConfirmacaoSenha(e.target.value)}
                 placeholder=" "
-                className="peer w-full bg-[#222] border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
+                className="peer w-full bg-sigma-elevated border border-gray-700 rounded-xl pl-12 pr-4 pt-5 pb-2 text-sm text-white focus:border-yellow-500 outline-none transition-all focus:bg-[#2a2a2a]"
               />
               <label className="absolute left-12 top-1.5 text-[10px] text-gray-500 transition-all pointer-events-none peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-[10px] peer-focus:text-yellow-500">
                 Confirme a Nova Senha

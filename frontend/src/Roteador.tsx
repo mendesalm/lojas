@@ -28,7 +28,7 @@ function RotaProtegida({ children }: { children: React.ReactNode }) {
 
   if (carregando) {
     return (
-      <div className="h-screen w-screen flex items-center justify-center bg-[#080808] text-yellow-500 font-sans">
+      <div className="h-screen w-screen flex items-center justify-center bg-sigma-bg text-yellow-500 font-sans">
         Carregando Sistema de Lojas...
       </div>
     );
