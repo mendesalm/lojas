@@ -62,6 +62,7 @@ import LodgeMembersWidget from './components/LodgeMembersWidget';
 import LodgeCommemorativeEventsWidget from './components/LodgeCommemorativeEventsWidget';
 import LodgeNoticesWidget from './components/LodgeNoticesWidget';
 import LodgeSessionsWidget from './components/LodgeSessionsWidget';
+import ProfileHeaderCard from './components/ProfileHeaderCard';
 import QuickAccessWidget from './components/QuickAccessWidget';
 import { useAuth } from '@/compartilhado/contextos/AuthContext';
 import { obterUrlLojasBase } from '@/compartilhado/servicos/configuracaoApi';
@@ -318,6 +319,11 @@ export const PaginaInicio: React.FC = () => {
             fontFamily: '"Inter", sans-serif',
             overflow: { xs: 'visible', md: 'hidden' },
         }}>
+
+            <ProfileHeaderCard 
+                lodgeName={stats?.lodge_info?.name} 
+                lodgeNumber={stats?.lodge_info?.numero} 
+            />
 
             <Grid container spacing={1.5} columns={10} sx={{ flexGrow: 1, height: '100%', minHeight: 0 }}>
                 {/* Coluna Esquerda: Membros e Datas Comemorativas */}
