@@ -157,7 +157,7 @@ export const LogoAnimadaLojas: React.FC<LogoAnimadaLojasProps> = ({
         {showText && (
           <div className="flex flex-col mt-2">
             <span className="lojas-logo-text leading-tight">{text}</span>
-            <span className="text-[9px] uppercase tracking-widest text-[#facc15]/70 font-semibold text-center">Oficina Maçônica</span>
+            <span className="text-[9px] uppercase tracking-widest title-sigma-gold/70 font-semibold text-center">Oficina Maçônica</span>
           </div>
         )}
       </div>
