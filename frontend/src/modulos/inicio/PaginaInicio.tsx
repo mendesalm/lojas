@@ -322,7 +322,7 @@ export const PaginaInicio: React.FC = () => {
 
             <ProfileHeaderCard 
                 lodgeName={stats?.lodge_info?.name} 
-                lodgeNumber={stats?.lodge_info?.numero} 
+                lodgeNumber={stats?.lodge_info?.number} 
             />
 
             <Grid container spacing={1.5} columns={10} sx={{ flexGrow: 1, height: '100%', minHeight: 0 }}>

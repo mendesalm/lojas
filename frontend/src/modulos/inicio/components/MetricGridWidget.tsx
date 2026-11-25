@@ -67,7 +67,7 @@ const MetricGridWidget: React.FC<MetricGridWidgetProps> = ({ stats, onClick, can
             
             <Grid container spacing={1.5}>
                 {metrics.map((metric, index) => (
-                    <Grid item xs={6} sm={3} key={index}>
+                    <Grid size={{ xs: 6, sm: 3 }} key={index}>
                         <Paper
                             elevation={0}
                             onClick={index === 0 ? onClick : undefined} // Clicking "Membros Ativos" also opens it
