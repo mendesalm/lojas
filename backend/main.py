@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 import os
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -7,6 +8,7 @@ from database import engine, Base
 
 # Import all models to ensure they are registered with SQLAlchemy
 from models import models
+from models import confirmacao_whatsapp  # noqa: F401
 
 # API própria do módulo Lojas (2026-09-14) — primeira fatia: autenticação
 # via e-Sigma + posse de cargo (mandato). Ver claude/decisao-transmissao-
@@ -19,14 +21,31 @@ from api.v1.lojas_admin_rotas import router as lojas_admin_router, router_lojas_
 from api.v1.documentos_rotas import router as documentos_router, router_docs_global
 from api.v1.admissoes_rotas import router as admissoes_router, router_admissoes_global
 from api.v1.dashboard_rotas import router as dashboard_router
+from api.v1.confirmacao_whatsapp_rotas import (
+    router_autenticado as confirmacao_whatsapp_router,
+    router_publico as confirmacao_publica_router,
+)
+from services.confirmacao_whatsapp_service import iniciar_agendador_whatsapp
 
 # Ensure tables are created (in a real app, use Alembic)
 # Base.metadata.create_all(bind=engine)
 
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    task_agendador = iniciar_agendador_whatsapp()
+    try:
+        yield
+    finally:
+        if task_agendador:
+            task_agendador.cancel()
+
+
 app = FastAPI(
     title="Lojas API (ERP Maçônico)",
     description="Backend oficial do Módulo Lojas (Secretaria, Chancelaria, Administração)",
-    version="1.1.0"
+    version="1.1.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -49,6 +68,8 @@ app.include_router(documentos_router, prefix="/api/v1")
 app.include_router(admissoes_router, prefix="/api/v1")
 app.include_router(lojas_admin_router, prefix="/api/v1")
 app.include_router(dashboard_router, prefix="/api/v1")
+app.include_router(confirmacao_whatsapp_router, prefix="/api/v1")
+app.include_router(confirmacao_publica_router, prefix="/api/v1")
 
 @app.get("/health", tags=["Diagnóstico"])
 def health_check():

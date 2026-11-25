@@ -14,6 +14,7 @@ logar a chave recebida, nem a configurada, em nenhuma circunstância.
 """
 import os
 import secrets
+from typing import Optional
 
 from fastapi import Header, HTTPException
 

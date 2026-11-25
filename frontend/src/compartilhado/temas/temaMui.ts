@@ -94,7 +94,6 @@ export const obterTemaLojas = (modo: 'dark' | 'light') => {
               boxShadow: isDark ? '0 6px 20px rgba(209, 169, 88, 0.5)' : 'none',
             },
           },
-          },
         },
       },
       MuiCard: {

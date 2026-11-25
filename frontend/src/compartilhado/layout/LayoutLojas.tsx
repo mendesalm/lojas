@@ -32,7 +32,8 @@ import {
   ArrowDropDown as ArrowDropDownIcon,
   SwapHoriz as SwapHorizIcon,
   Check as CheckIcon,
-  GetApp as GetAppIcon
+  GetApp as GetAppIcon,
+  WhatsApp as WhatsAppIcon
 } from '@mui/icons-material';
 import { useAuth, clienteHttp, type LojaItem } from '@/compartilhado/contextos/AuthContext';
 import { usePwaInstall } from '@/compartilhado/hooks/usePwaInstall';
@@ -121,6 +122,13 @@ export const LayoutLojas: React.FC = () => {
       texto: 'Livro de Visitantes',
       rota: '/visitantes',
       renderIcon: (active: boolean) => <MemberPanelIcon active={active} sx={{ height: 28, width: 'auto' }} />,
+    },
+    {
+      texto: 'Lista WhatsApp',
+      rota: '/confirmacao-whatsapp',
+      renderIcon: (active: boolean) => (
+        <WhatsAppIcon sx={{ fontSize: 26, color: active ? '#D4AF37' : 'inherit' }} />
+      ),
     },
     {
       texto: 'Comissões',
