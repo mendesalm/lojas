@@ -16,6 +16,8 @@ import { PaginaTrocarSenhaObrigatoria } from '@/modulos/autenticacao/PaginaTroca
 import { PaginaEntrarComLink } from '@/modulos/autenticacao/PaginaEntrarComLink';
 import { PaginaConfirmarMagicLink } from '@/modulos/autenticacao/PaginaConfirmarMagicLink';
 import { PaginaEntrarComPasskey } from '@/modulos/autenticacao/PaginaEntrarComPasskey';
+import { PaginaConfirmacaoWhatsapp } from '@/modulos/confirmacao/PaginaConfirmacaoWhatsapp';
+import { PaginaConfirmacaoPublica } from '@/modulos/confirmacao/PaginaConfirmacaoPublica';
 import { useAuth } from '@/compartilhado/contextos/AuthContext';
 
 /**
@@ -52,6 +54,9 @@ export const Roteador: React.FC = () => {
       <Route path="/magic-link" element={<PaginaConfirmarMagicLink />} />
       <Route path="/entrar-com-passkey" element={<PaginaEntrarComPasskey />} />
 
+      {/* Rota Pública da Lista Semanal de Confirmação WhatsApp */}
+      <Route path="/confirmacao/:slug" element={<PaginaConfirmacaoPublica />} />
+
       {/* Troca obrigatória de senha (exige token de primeiro acesso) */}
       <Route
         path="/trocar-senha-obrigatoria"
@@ -80,6 +85,7 @@ export const Roteador: React.FC = () => {
         <Route path="/comissoes" element={<PaginaComissoes />} />
         <Route path="/dados-loja" element={<PaginaDadosLoja />} />
         <Route path="/meu-cadastro" element={<PaginaMeuCadastro />} />
+        <Route path="/confirmacao-whatsapp" element={<PaginaConfirmacaoWhatsapp />} />
       </Route>
 
       {/* Fallback */}

@@ -79,23 +79,27 @@ export const obterTemaLojas = (modo: 'dark' | 'light') => {
             letterSpacing: '0.03em',
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           },
-          containedPrimary: {
-            backgroundImage: isDark
-              ? 'linear-gradient(to right, #C6AB6A, #D1A958, #EBCD79)'
-              : 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
-            color: isDark ? '#070F1E' : '#ffffff',
-            boxShadow: isDark 
-              ? '0 4px 15px rgba(209, 169, 88, 0.3)' 
-              : '0 2px 8px rgba(2, 132, 199, 0.3)',
-            '&:hover': {
+        },
+        variants: [
+          {
+            props: { variant: 'contained', color: 'primary' },
+            style: {
               backgroundImage: isDark
-                ? 'linear-gradient(to right, #D1A958, #EBCD79, #C6AB6A)'
-                : 'linear-gradient(135deg, #0369a1 0%, #075985 100%)',
-              boxShadow: isDark ? '0 6px 20px rgba(209, 169, 88, 0.5)' : 'none',
+                ? 'linear-gradient(to right, #C6AB6A, #D1A958, #EBCD79)'
+                : 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+              color: isDark ? '#070F1E' : '#ffffff',
+              boxShadow: isDark
+                ? '0 4px 15px rgba(209, 169, 88, 0.3)'
+                : '0 2px 8px rgba(2, 132, 199, 0.3)',
+              '&:hover': {
+                backgroundImage: isDark
+                  ? 'linear-gradient(to right, #D1A958, #EBCD79, #C6AB6A)'
+                  : 'linear-gradient(135deg, #0369a1 0%, #075985 100%)',
+                boxShadow: isDark ? '0 6px 20px rgba(209, 169, 88, 0.5)' : 'none',
+              },
             },
           },
-          },
-        },
+        ],
       },
       MuiCard: {
         styleOverrides: {

@@ -22,6 +22,39 @@ jobs:
             # Atualiza e reinicia Backend
             source venv/bin/activate
             pip install -r backend/requirements.txt
+
+            # Sincroniza WA_GATEWAY_URL e WA_GATEWAY_KEY com /var/www/esigma-wa-gateway/.env (se existir)
+            ENV_BACKEND="/var/www/lojas/backend/.env"
+            if [ ! -f "$ENV_BACKEND" ] && [ -f "/var/www/lojas/.env" ]; then
+              ENV_BACKEND="/var/www/lojas/.env"
+            fi
+            if [ -f "$ENV_BACKEND" ] && [ -f "/var/www/esigma-wa-gateway/.env" ]; then
+              GW_KEY=$(grep -E '^WA_GATEWAY_KEY=' /var/www/esigma-wa-gateway/.env | cut -d'=' -f2-)
+              grep -q '^WA_GATEWAY_URL=' "$ENV_BACKEND" || echo "WA_GATEWAY_URL=http://127.0.0.1:8004" >> "$ENV_BACKEND"
+              if [ -n "$GW_KEY" ] && ! grep -q '^WA_GATEWAY_KEY=' "$ENV_BACKEND"; then
+                echo "WA_GATEWAY_KEY=${GW_KEY}" >> "$ENV_BACKEND"
+              fi
+            fi
+
+            # Aplica migração idempotente das tabelas de confirmação WhatsApp
+            python3 - <<'PYEOF'
+            import os
+            from pathlib import Path
+            from dotenv import load_dotenv
+            from sqlalchemy import create_engine, text
+
+            for env_path in ("/var/www/lojas/backend/.env", "/var/www/lojas/.env"):
+                if Path(env_path).exists():
+                    load_dotenv(env_path)
+            db_url = os.getenv("DATABASE_URL")
+            sql_file = Path("/var/www/lojas/backend/migracoes/migracao_confirmacao_whatsapp.sql")
+            if db_url and sql_file.exists():
+                engine = create_engine(db_url)
+                with engine.begin() as conn:
+                    conn.execute(text(sql_file.read_text(encoding="utf-8")))
+                print("Migração confirmacao_whatsapp aplicada com sucesso.")
+            PYEOF
+
             sudo systemctl restart lojas || sudo systemctl restart lojas_backend || true
             
             # Atualiza e compila Frontend
