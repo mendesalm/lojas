@@ -15,8 +15,10 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
+            set -e
             # Acessar a pasta onde o projeto Lojas está na VPS
             cd /var/www/lojas
+            git checkout -- .
             git pull origin main
             
             # Atualiza e reinicia Backend
